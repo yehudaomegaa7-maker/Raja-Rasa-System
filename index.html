@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +9,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Chart.js untuk Dashboard Manager -->
+  <!-- Chart.js & Datalabels Plugin untuk Persentase Pie Chart -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <!-- XLSX Library untuk Export Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -81,9 +82,14 @@
         <i class="fa-solid fa-door-open"></i> <span id="badge-room-name">Lobby</span>
       </span>
 
-      <!-- Theme Switcher -->
+      <!-- Tombol Refresh Tanpa Password / Reset -->
+      <button onclick="refreshCurrentRoom()" title="Refresh Data" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1 shadow">
+        <i class="fa-solid fa-rotate-right"></i> Refresh
+      </button>
+
+      <!-- Theme Switcher (Default Light Mode) -->
       <button onclick="toggleTheme()" title="Ubah Tema" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-        <i id="theme-icon" class="fa-solid fa-moon"></i>
+        <i id="theme-icon" class="fa-solid fa-sun text-yellow-500"></i>
       </button>
 
       <!-- Bluetooth Connectors -->
@@ -104,7 +110,7 @@
   <!-- MAIN CONTAINER -->
   <main class="p-4 max-w-7xl mx-auto">
 
-    <!-- ==================== LANDING / LOCK SCREEN (TANPA CLUE PIN) ==================== -->
+    <!-- ==================== LANDING / LOCK SCREEN ==================== -->
     <div id="screen-landing" class="min-h-[80vh] flex flex-col items-center justify-center py-10 space-y-8">
       <div class="text-center space-y-3">
         <div class="w-20 h-20 rounded-full bg-brand-500 text-white flex items-center justify-center text-4xl mx-auto shadow-xl ring-4 ring-brand-300 dark:ring-brand-900/50">
@@ -271,7 +277,7 @@
               </div>
             </div>
 
-            <!-- Payment Methods (With Visual Blur & Highlight Effect) -->
+            <!-- Payment Methods -->
             <div>
               <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">Pilih Metode Pembayaran:</label>
               <div class="grid grid-cols-3 gap-2" id="payment-buttons-grid">
@@ -387,16 +393,16 @@
             <canvas id="salesBarChart"></canvas>
           </div>
         </div>
-        <!-- Pie Chart Top Menu -->
+        <!-- Pie Chart Top Menu (Dengan Persentase %) -->
         <div class="lg:col-span-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm">
-          <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3"><i class="fa-solid fa-chart-pie text-brand-500"></i> Proporsi Menu Terlaris</h3>
+          <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3"><i class="fa-solid fa-chart-pie text-brand-500"></i> Proporsi Menu Terlaris (%)</h3>
           <div class="h-64 relative">
             <canvas id="topMenuPieChart"></canvas>
           </div>
         </div>
       </div>
 
-      <!-- Manager Full History Table (dengan Akses Hapus & Ubah Status) -->
+      <!-- Manager Full History Table -->
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm">
         <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2 text-sm">
           <i class="fa-solid fa-clock-rotate-left text-brand-500"></i> Seluruh Riwayat Transaksi (Manager Full Access)
@@ -454,17 +460,22 @@
     <!-- ==================== RUANG KITCHEN (KDS) ==================== -->
     <div id="workspace-kitchen" class="space-y-4 hidden">
       
-      <!-- Kitchen Header Banner -->
+      <!-- Kitchen Header Banner dengan Sakelar Suara -->
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-sm">
         <div>
           <h2 class="font-bold text-lg text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
             <i class="fa-solid fa-kitchen-set"></i> Kitchen Display System (KDS)
           </h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Layar Pantau Dapur Real-time (Notifikasi Vokal Aktif)</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Layar Pantau Dapur Real-time</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
+          <!-- Sakelar Aktifkan / Nonaktifkan Suara Vokal -->
+          <button onclick="toggleVoiceSound()" id="btn-toggle-voice" class="text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow">
+            <i class="fa-solid fa-volume-high"></i> Suara: ON
+          </button>
+
           <span class="text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-xl font-semibold border border-emerald-300 dark:border-emerald-700">
-            <i class="fa-solid fa-wifi text-xs animate-pulse mr-1"></i> Live Firebase Sync
+            <i class="fa-solid fa-wifi text-xs animate-pulse mr-1"></i> Live Sync
           </span>
         </div>
       </div>
@@ -505,7 +516,7 @@
 
   <!-- ==================== MODALS ==================== -->
 
-  <!-- PIN Access Modal (Tanpa Clue PIN) -->
+  <!-- PIN Access Modal -->
   <div id="modal-pin" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl text-center">
       <div id="pin-icon-box" class="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 flex items-center justify-center mx-auto text-xl">
@@ -600,24 +611,20 @@
     }
     const db = firebase.database();
 
-    // --- COMPLETE DATASET 132 ITEMS MENU ---
+    // --- MASTER 132 MENU DATASET ---
     const MASTER_132_MENU = [
-      // ANEKA NASI UDUK
       { id: "M001", code: "UDK01", name: "Nasi Uduk Polos", cat: "ANEKA NASI UDUK", price: 13000 },
       { id: "M002", code: "UDK02", name: "Nasi Uduk Telur Balado", cat: "ANEKA NASI UDUK", price: 16000 },
       { id: "M003", code: "UDK03", name: "Nasi Uduk Telur Dadar", cat: "ANEKA NASI UDUK", price: 16000 },
       { id: "M004", code: "UDK04", name: "Nasi Uduk Ayam Komplit", cat: "ANEKA NASI UDUK", price: 30000 },
-      // TAMBAHAN NASI UDUK
       { id: "M005", code: "TUD01", name: "Telur Dadar Extra", cat: "TAMBAHAN NASI UDUK", price: 5000 },
       { id: "M006", code: "TUD02", name: "Telur Balado Extra", cat: "TAMBAHAN NASI UDUK", price: 5000 },
       { id: "M007", code: "TUD03", name: "Telur Mata Sapi Extra", cat: "TAMBAHAN NASI UDUK", price: 5000 },
       { id: "M008", code: "TUD04", name: "Ayam Goreng Extra", cat: "TAMBAHAN NASI UDUK", price: 18000 },
       { id: "M009", code: "TUD05", name: "Nasi Uduk Portions", cat: "TAMBAHAN NASI UDUK", price: 7000 },
-      // MENU SARAPAN
       { id: "M010", code: "SRP01", name: "Nasi Soto Ayam", cat: "MENU SARAPAN", price: 20000 },
       { id: "M011", code: "SRP02", name: "Lontong Sayur", cat: "MENU SARAPAN", price: 20000 },
       { id: "M012", code: "SRP03", name: "Gado-gado", cat: "MENU SARAPAN", price: 20000 },
-      // ANEKA NASI GORENG
       { id: "M013", code: "NGR01", name: "Nasi Goreng Spesial", cat: "ANEKA NASI GORENG", price: 22000 },
       { id: "M014", code: "NGR02", name: "Nasi Goreng Seafood", cat: "ANEKA NASI GORENG", price: 30000 },
       { id: "M015", code: "NGR03", name: "Nasi Goreng Hongkong", cat: "ANEKA NASI GORENG", price: 22000 },
@@ -625,34 +632,28 @@
       { id: "M017", code: "NGR05", name: "Nasi Goreng Teri", cat: "ANEKA NASI GORENG", price: 25000 },
       { id: "M018", code: "NGR06", name: "Nasi Goreng Spesial Cabe Ijo", cat: "ANEKA NASI GORENG", price: 25000 },
       { id: "M019", code: "NGR07", name: "Nasi Goreng Seafood Cabe Ijo", cat: "ANEKA NASI GORENG", price: 32000 },
-      // MIE, BIHUN, KWETIAU
       { id: "M020", code: "MBK01", name: "Mie Goreng Spesial", cat: "MIE, BIHUN, KWETIAU", price: 22000 },
       { id: "M021", code: "MBK02", name: "Mie Goreng Seafood", cat: "MIE, BIHUN, KWETIAU", price: 30000 },
       { id: "M022", code: "MBK03", name: "Bihun Goreng Spesial", cat: "MIE, BIHUN, KWETIAU", price: 22000 },
       { id: "M023", code: "MBK04", name: "Bihun Goreng Seafood", cat: "MIE, BIHUN, KWETIAU", price: 30000 },
       { id: "M024", code: "MBK05", name: "Kwetiau Goreng Spesial", cat: "MIE, BIHUN, KWETIAU", price: 22000 },
       { id: "M025", code: "MBK06", name: "Kwetiau Goreng Seafood", cat: "MIE, BIHUN, KWETIAU", price: 30000 },
-      // ANEKA INDOMIE
       { id: "M026", code: "IND01", name: "Indomie Goreng Telur", cat: "ANEKA INDOMIE", price: 15000 },
       { id: "M027", code: "IND02", name: "Indomie Rebus Telur", cat: "ANEKA INDOMIE", price: 15000 },
-      // SNACK
       { id: "M028", code: "SNK01", name: "Bakwan Ranjau", cat: "SNACK", price: 15000 },
       { id: "M029", code: "SNK02", name: "Kentang Goreng", cat: "SNACK", price: 15000 },
       { id: "M030", code: "SNK03", name: "Puding Telur", cat: "SNACK", price: 15000 },
-      // IKAN NILA, LELE, AYAM BAKAR, BEBEK
       { id: "M031", code: "NLB01", name: "Ayam Bakar Plus Nasi", cat: "IKAN NILA, LELE, AYAM BAKAR, BEBEK", price: 27000 },
       { id: "M032", code: "NLB02", name: "Bebek Goreng Plus Nasi", cat: "IKAN NILA, LELE, AYAM BAKAR, BEBEK", price: 45000 },
       { id: "M033", code: "NLB03", name: "Nila Goreng Tahu Tempe", cat: "IKAN NILA, LELE, AYAM BAKAR, BEBEK", price: 32000 },
       { id: "M034", code: "NLB04", name: "Nila Bakar Plus Nasi", cat: "IKAN NILA, LELE, AYAM BAKAR, BEBEK", price: 28000 },
       { id: "M035", code: "NLB05", name: "Lele Goreng Tahu Tempe", cat: "IKAN NILA, LELE, AYAM BAKAR, BEBEK", price: 26000 },
       { id: "M036", code: "NLB06", name: "Ayam Goreng Plus Nasi", cat: "IKAN NILA, LELE, AYAM BAKAR, BEBEK", price: 27000 },
-      // ANEKA AYAM GORENG
       { id: "M037", code: "AYM01", name: "Ayam Goreng Telur Mata Sapi", cat: "ANEKA AYAM GORENG", price: 32000 },
       { id: "M038", code: "AYM02", name: "Ayam Goreng Plus Nasi Spec", cat: "ANEKA AYAM GORENG", price: 27000 },
       { id: "M039", code: "AYM03", name: "Ayam Goreng Tahu Tempe", cat: "ANEKA AYAM GORENG", price: 31000 },
       { id: "M040", code: "AYM04", name: "Ayam Lengkuas Plus Nasi", cat: "ANEKA AYAM GORENG", price: 27000 },
       { id: "M041", code: "AYM05", name: "Ayam Kremes Plus Nasi", cat: "ANEKA AYAM GORENG", price: 27000 },
-      // TAMBAHAN
       { id: "M042", code: "TMB01", name: "Tahu/Tempe (Satuan)", cat: "TAMBAHAN", price: 2000 },
       { id: "M043", code: "TMB02", name: "Telur Dadar/Mata Sapi", cat: "TAMBAHAN", price: 5000 },
       { id: "M044", code: "TMB03", name: "Sambal Extra", cat: "TAMBAHAN", price: 3000 },
@@ -660,14 +661,11 @@
       { id: "M046", code: "TMB05", name: "Tahu 1 pcs", cat: "TAMBAHAN", price: 2000 },
       { id: "M047", code: "TMB06", name: "Tempe 1 pcs", cat: "TAMBAHAN", price: 2000 },
       { id: "M048", code: "TMB07", name: "Tahu Tempe per Porsi", cat: "TAMBAHAN", price: 8000 },
-      // RICE BOWL
       { id: "M049", code: "RCB01", name: "Rice Bowl Chicken Blackpepper", cat: "RICE BOWL", price: 25000 },
       { id: "M050", code: "RCB02", name: "Rice Bowl Chicken Teriyaki", cat: "RICE BOWL", price: 25000 },
-      // DORI, AYAM FILLET
       { id: "M051", code: "DAF01", name: "Dori Fillet Asam Manis", cat: "DORI, AYAM FILLET", price: 32000 },
       { id: "M052", code: "DAF02", name: "Bistik Ayam", cat: "DORI, AYAM FILLET", price: 25000 },
       { id: "M053", code: "DAF03", name: "Nasi Sapo Tahu", cat: "DORI, AYAM FILLET", price: 32000 },
-      // MENU SAYURAN
       { id: "M054", code: "SYR01", name: "Capcay Ayam/Seafood", cat: "MENU SAYURAN", price: 27000 },
       { id: "M055", code: "SYR02", name: "Capcay Jawa", cat: "MENU SAYURAN", price: 27000 },
       { id: "M056", code: "SYR03", name: "Sapo Tahu Ayam/Seafood", cat: "MENU SAYURAN", price: 32000 },
@@ -676,7 +674,6 @@
       { id: "M059", code: "SYR06", name: "Cah Kangkung Terasi", cat: "MENU SAYURAN", price: 25000 },
       { id: "M060", code: "SYR07", name: "Cah Kangkung Bawang Putih", cat: "MENU SAYURAN", price: 25000 },
       { id: "M061", code: "SYR08", name: "Cah Kangkung Tauco", cat: "MENU SAYURAN", price: 25000 },
-      // SEAFOOD UDANG
       { id: "M062", code: "UDG01", name: "Nasi Putih/Nasi Uduk Porsi", cat: "SEAFOOD UDANG", price: 7000 },
       { id: "M063", code: "UDG02", name: "Udang Goreng Tepung", cat: "SEAFOOD UDANG", price: 65000 },
       { id: "M064", code: "UDG03", name: "Udang Saus Padang", cat: "SEAFOOD UDANG", price: 65000 },
@@ -685,7 +682,6 @@
       { id: "M067", code: "UDG06", name: "Udang Mentega Kecap", cat: "SEAFOOD UDANG", price: 65000 },
       { id: "M068", code: "UDG07", name: "Udang Cabe Ijo", cat: "SEAFOOD UDANG", price: 65000 },
       { id: "M069", code: "UDG08", name: "Udang Masak Tauco", cat: "SEAFOOD UDANG", price: 65000 },
-      // SEAFOOD CUMI
       { id: "M070", code: "CMI01", name: "Cumi Goreng Tepung", cat: "SEAFOOD CUMI", price: 65000 },
       { id: "M071", code: "CMI02", name: "Cumi Saus Padang", cat: "SEAFOOD CUMI", price: 65000 },
       { id: "M072", code: "CMI03", name: "Cumi Asam Manis", cat: "SEAFOOD CUMI", price: 65000 },
@@ -693,19 +689,16 @@
       { id: "M074", code: "CMI05", name: "Cumi Mentega Kecap", cat: "SEAFOOD CUMI", price: 65000 },
       { id: "M075", code: "CMI06", name: "Cumi Cabe Ijo", cat: "SEAFOOD CUMI", price: 65000 },
       { id: "M076", code: "CMI07", name: "Cumi Masak Tauco", cat: "SEAFOOD CUMI", price: 65000 },
-      // MENU IKAN GURAME
       { id: "M077", code: "GRM01", name: "Gurame Bakar", cat: "MENU IKAN GURAME", price: 65000 },
       { id: "M078", code: "GRM02", name: "Gurame Fillet Asam Manis", cat: "MENU IKAN GURAME", price: 65000 },
       { id: "M079", code: "GRM03", name: "Gurame Masak Tauco", cat: "MENU IKAN GURAME", price: 65000 },
       { id: "M080", code: "GRM04", name: "Gurame Goreng", cat: "MENU IKAN GURAME", price: 65000 },
       { id: "M081", code: "GRM05", name: "Gurame Cabe Ijo", cat: "MENU IKAN GURAME", price: 65000 },
-      // MENU IKAN KAKAP
       { id: "M082", code: "KKP01", name: "Kakap Bakar", cat: "MENU IKAN KAKAP", price: 75000 },
       { id: "M083", code: "KKP02", name: "Kakap Fillet Asam Manis", cat: "MENU IKAN KAKAP", price: 75000 },
       { id: "M084", code: "KKP03", name: "Kakap Masak Tauco", cat: "MENU IKAN KAKAP", price: 75000 },
       { id: "M085", code: "KKP04", name: "Kakap Goreng", cat: "MENU IKAN KAKAP", price: 75000 },
       { id: "M086", code: "KKP05", name: "Kakap Cabe Ijo", cat: "MENU IKAN KAKAP", price: 75000 },
-      // ANEKA OLAHAN AYAM
       { id: "M087", code: "OLA01", name: "Ayam Goreng Bawang Putih", cat: "ANEKA OLAHAN AYAM", price: 55000 },
       { id: "M088", code: "OLA02", name: "Ayam Saus Padang", cat: "ANEKA OLAHAN AYAM", price: 55000 },
       { id: "M089", code: "OLA03", name: "Ayam Asam Manis", cat: "ANEKA OLAHAN AYAM", price: 55000 },
@@ -716,24 +709,20 @@
       { id: "M094", code: "OLA08", name: "Sop Ayam", cat: "ANEKA OLAHAN AYAM", price: 25000 },
       { id: "M095", code: "OLA09", name: "Ayam Kuah Tauco", cat: "ANEKA OLAHAN AYAM", price: 30000 },
       { id: "M096", code: "OLA10", name: "Ayam Sambal Pete", cat: "ANEKA OLAHAN AYAM", price: 55000 },
-      // ANEKA JUS
       { id: "M097", code: "JUS01", name: "Jus Buah Naga", cat: "ANEKA JUS", price: 18000 },
       { id: "M098", code: "JUS02", name: "Jus Mangga", cat: "ANEKA JUS", price: 18000 },
       { id: "M099", code: "JUS03", name: "Jus Alpukat", cat: "ANEKA JUS", price: 18000 },
       { id: "M100", code: "JUS04", name: "Green Booster Jus", cat: "ANEKA JUS", price: 20000 },
       { id: "M101", code: "JUS05", name: "Orange Booster Jus", cat: "ANEKA JUS", price: 20000 },
       { id: "M102", code: "JUS06", name: "Jus Wortel Mix Tomat", cat: "ANEKA JUS", price: 20000 },
-      // TEH SERIES
       { id: "M103", code: "TEH01", name: "Teh Tawar Panas", cat: "TEH SERIES", price: 4000 },
       { id: "M104", code: "TEH02", name: "Teh Tawar Dingin", cat: "TEH SERIES", price: 7000 },
       { id: "M105", code: "TEH03", name: "Teh Manis Panas", cat: "TEH SERIES", price: 5000 },
       { id: "M106", code: "TEH04", name: "Teh Manis Dingin", cat: "TEH SERIES", price: 8000 },
       { id: "M107", code: "TEH05", name: "Lychee Tea", cat: "TEH SERIES", price: 30000 },
-      // MILO SERIES
       { id: "M108", code: "MIL01", name: "Milo Dino", cat: "MILO SERIES", price: 20000 },
       { id: "M109", code: "MIL02", name: "Milo Chocolate Float", cat: "MILO SERIES", price: 25000 },
       { id: "M110", code: "MIL03", name: "Es Coklat", cat: "MILO SERIES", price: 20000 },
-      // MATCHA SERIES
       { id: "M111", code: "MTC01", name: "Green Tea Latte", cat: "MATCHA SERIES", price: 20000 },
       { id: "M112", code: "MTC02", name: "Thai Tea", cat: "MATCHA SERIES", price: 20000 },
       { id: "M113", code: "MTC03", name: "Lemon Tea Panas", cat: "MATCHA SERIES", price: 18000 },
@@ -742,14 +731,12 @@
       { id: "M116", code: "MTC06", name: "Ice Matcha Latte", cat: "MATCHA SERIES", price: 30000 },
       { id: "M117", code: "MTC07", name: "Ice Strawberry Matcha", cat: "MATCHA SERIES", price: 30000 },
       { id: "M118", code: "MTC08", name: "Ice Matcha Cloud", cat: "MATCHA SERIES", price: 30000 },
-      // KOPI SERIES
       { id: "M119", code: "KOP01", name: "Kopi Tarutung Panas", cat: "KOPI SERIES", price: 15000 },
       { id: "M120", code: "KOP02", name: "Kopi Tarutung Dingin", cat: "KOPI SERIES", price: 18000 },
       { id: "M121", code: "KOP03", name: "Kopi Susu Tarutung Panas", cat: "KOPI SERIES", price: 18000 },
       { id: "M122", code: "KOP04", name: "Kopi Susu Tarutung Dingin", cat: "KOPI SERIES", price: 20000 },
       { id: "M123", code: "KOP05", name: "Kopi Butter", cat: "KOPI SERIES", price: 20000 },
       { id: "M124", code: "KOP06", name: "Air Mineral", cat: "KOPI SERIES", price: 4000 },
-      // ICE COFFEE LATTE
       { id: "M125", code: "ICL01", name: "Iced Biscoff Latte", cat: "ICE COFFEE LATTE", price: 28000 },
       { id: "M126", code: "ICL02", name: "Iced Butterscotch Seasalt Cream", cat: "ICE COFFEE LATTE", price: 28000 },
       { id: "M127", code: "ICL03", name: "Ice Caramel Macchiato", cat: "ICE COFFEE LATTE", price: 28000 },
@@ -768,7 +755,8 @@
     let selectedPayment = "";
     let activeRoom = null;
     let pendingPINRoom = null;
-    let orderType = "DINE_IN"; // Default: Dine In
+    let orderType = "DINE_IN";
+    let voiceEnabled = true; // REVISI 2: Toggle Suara Vokal (Default: ON)
 
     let shiftInfo = {
       kasirName: "Kasir Utama",
@@ -794,6 +782,7 @@
       document.getElementById('filter-end-date').value = today;
     }
 
+    // REVISI 4: Default Light Mode + Theme Switcher
     function toggleTheme() {
       const html = document.documentElement;
       const icon = document.getElementById('theme-icon');
@@ -806,13 +795,28 @@
       }
     }
 
-    // --- FIREBASE SYNC & CLEAN SEED ---
+    // REVISI 3: Tombol Refresh Cepat Tanpa Reset & Tanpa PIN
+    function refreshCurrentRoom() {
+      db.ref('transactions').once('value', (snapshot) => {
+        const val = snapshot.val();
+        transactions = val ? Object.values(val) : [];
+        renderKasirHistory();
+        renderManagerDashboard();
+        renderKitchenDisplay();
+      });
+    }
+
+    // --- FIREBASE REALTIME SYNC (PENGATURAN KITCHEN FIX) ---
     function initFirebaseRealtimeSync() {
-      db.ref('menu_items').set(MASTER_132_MENU);
+      db.ref('menu_items').once('value', (snapshot) => {
+        if (!snapshot.exists()) {
+          db.ref('menu_items').set(MASTER_132_MENU);
+        }
+      });
 
       db.ref('menu_items').on('value', (snapshot) => {
         const val = snapshot.val();
-        menuItems = val ? Object.values(val) : MASTER_132_MENU;
+        menuItems = val ? (Array.isArray(val) ? val : Object.values(val)) : MASTER_132_MENU;
         renderMenuCatalog();
         renderManagerMenuTable();
       });
@@ -821,9 +825,9 @@
         const val = snapshot.val();
         const newTrxList = val ? Object.values(val) : [];
 
-        // Notifikasi suara vokal hanya di Ruang Kitchen
+        // REVISI 2: Notifikasi Suara Vokal (Jika Aktif)
         if (previousTrxCount >= 0 && newTrxList.length > previousTrxCount) {
-          if (activeRoom === 'kitchen') {
+          if (activeRoom === 'kitchen' && voiceEnabled) {
             playVoiceNotification();
           }
         }
@@ -836,7 +840,19 @@
       });
     }
 
-    // --- VOICE NOTIFICATION ("PESANAN MASUK") ---
+    // REVISI 2: Sakelar Suara Vokal Dapur (ON / OFF)
+    function toggleVoiceSound() {
+      voiceEnabled = !voiceEnabled;
+      const btn = document.getElementById('btn-toggle-voice');
+      if (voiceEnabled) {
+        btn.className = "text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow";
+        btn.innerHTML = `<i class="fa-solid fa-volume-high"></i> Suara: ON`;
+      } else {
+        btn.className = "text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-gray-400 text-white shadow";
+        btn.innerHTML = `<i class="fa-solid fa-volume-xmark"></i> Suara: OFF`;
+      }
+    }
+
     function playVoiceNotification() {
       if ('speechSynthesis' in window) {
         const msg = new SpeechSynthesisUtterance("Pesanan Masuk!");
@@ -1064,7 +1080,7 @@
       validateCheckoutButton();
     }
 
-    // --- PAYMENT METHOD SELECTION & BLUR / HIGHLIGHT EFFECT ---
+    // --- PAYMENT METHOD SELECTION ---
     function selectPaymentMethod(method) {
       if (cart.length === 0) {
         alert("Pilih menu makanan/minuman terlebih dahulu!");
@@ -1163,7 +1179,7 @@
       }
     }
 
-    // --- CHECKOUT & DUAL PRINTING ---
+    // --- CHECKOUT PROCESS ---
     function processCheckout() {
       if (cart.length === 0) return;
 
@@ -1218,7 +1234,7 @@
       });
     }
 
-    // --- RECEIPT PRINTING & PREVIEW MODAL (ALAMAT REVISI: NO 152A) ---
+    // --- RECEIPT PRINTING & PREVIEW MODAL ---
     function triggerReceiptPrint(trx, mode = 'customer') {
       const isCustomer = (mode === 'customer');
       const tableInfo = (trx.orderType === 'DINE_IN') ? `[DINE IN - ${trx.table}]` : `[TAKE AWAY]`;
@@ -1234,7 +1250,7 @@
           </div>
           <div style="font-size: 10px; margin-bottom: 4px;">
             No. Trx : ${trx.code}<br>
-            Tgl     : ${trx.date} ${trx.time}<br>
+            Tgl     : ${trx.date}${trx.time}<br>
             Kasir   : ${trx.kasir}<br>
             Tipe    : <strong>${tableInfo}</strong>
           </div>
@@ -1245,12 +1261,12 @@
                 <td colspan="2" style="font-weight: bold;">${i.name}</td>
               </tr>
               <tr>
-                <td>${i.qty} x${formatRupiah(i.price)}</td>
+                <td>${i.qty} x ${formatRupiah(i.price)}</td>
                 <td style="text-align: right;">${formatRupiah(i.price * i.qty)}</td>
               </tr>
             `).join('')}
           </table>
-          ${trx.note ? `<div style="font-size: 9px; margin-bottom: 4px;">Catatan: ${trx.note}</div>` : ''}
+          ${trx.note ? `<div style="font-size: 9px; margin-bottom: 4px; font-weight: bold;">Catatan: ${trx.note}</div>` : ''}
           <div>--------------------------------</div>
           <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px;">
             <span>TOTAL:</span>
@@ -1380,7 +1396,7 @@
       db.ref(`transactions/${code}`).update({ status: newStatus });
     }
 
-    // --- MANAGER DASHBOARD & CHARTS ---
+    // --- MANAGER DASHBOARD & CHARTS (PERSENTASE PIE CHART REVISI 5) ---
     let barChartInstance = null;
     let pieChartInstance = null;
 
@@ -1448,16 +1464,19 @@
       });
     }
 
+    // REVISI 5: Tampilan Persentase (%) Pada Pie Chart Manager
     function renderPieChart(sortedItems) {
       const ctx = document.getElementById('topMenuPieChart').getContext('2d');
       const top5 = sortedItems.slice(0, 5);
       const labels = top5.map(i => i[0]);
       const values = top5.map(i => i[1]);
+      const grandTotal = values.reduce((sum, val) => sum + val, 0);
 
       if (pieChartInstance) pieChartInstance.destroy();
 
       pieChartInstance = new Chart(ctx, {
         type: 'pie',
+        plugins: [ChartDataLabels],
         data: {
           labels: labels.length ? labels : ['Belum Ada Data'],
           datasets: [{
@@ -1467,7 +1486,18 @@
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false
+          maintainAspectRatio: false,
+          plugins: {
+            datalabels: {
+              formatter: (value, context) => {
+                if (grandTotal === 0) return '';
+                const percentage = ((value / grandTotal) * 100).toFixed(1) + '%';
+                return percentage;
+              },
+              color: '#fff',
+              font: { weight: 'bold', size: 11 }
+            }
+          }
         }
       });
     }
@@ -1481,7 +1511,7 @@
 
       tbody.innerHTML = filtered.reverse().map(t => `
         <tr class="${t.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400 line-through' : ''}">
-          <td class="p-2.5">${t.date} ${t.time}</td>
+          <td class="p-2.5">${t.date}${t.time}</td>
           <td class="p-2.5 font-bold">${t.code}</td>
           <td class="p-2.5">${t.kasir}</td>
           <td class="p-2.5 font-bold text-brand-600 dark:text-brand-400">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
@@ -1489,242 +1519,4 @@
           <td class="p-2.5 font-bold">${formatRupiah(t.total)}</td>
           <td class="p-2.5 font-bold">${t.status}</td>
           <td class="p-2.5 text-center space-x-1">
-            <button onclick="reprintReceipt('${t.code}')" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-[10px] font-bold">
-              <i class="fa-solid fa-print"></i>
-            </button>
-            <button onclick="deleteTransactionManager('${t.code}')" class="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    function deleteTransactionManager(code) {
-      if (confirm(`Manager: Yakin ingin menghapus permanen transaksi ${code}?`)) {
-        db.ref(`transactions/${code}`).remove();
-      }
-    }
-
-    function resetDateFilter() {
-      setupDefaultDates();
-      renderManagerDashboard();
-    }
-
-    // --- MANAGER MENU CRUD ---
-    function renderManagerMenuTable() {
-      const tbody = document.getElementById('manager-menu-tbody');
-      tbody.innerHTML = menuItems.map(m => `
-        <tr>
-          <td class="p-2.5 font-mono font-bold">${m.code}</td>
-          <td class="p-2.5 font-bold text-gray-800 dark:text-white">${m.name}</td>
-          <td class="p-2.5">${m.cat}</td>
-          <td class="p-2.5 font-extrabold text-brand-600 dark:text-brand-400">${formatRupiah(m.price)}</td>
-          <td class="p-2.5 text-center space-x-1">
-            <button onclick="openMenuModal('edit', '${m.id}')" class="bg-gray-200 dark:bg-gray-700 text-yellow-600 dark:text-yellow-400 px-2 py-1 rounded text-xs">
-              <i class="fa-solid fa-pen"></i>
-            </button>
-            <button onclick="deleteMenuCRUD('${m.id}')" class="bg-gray-200 dark:bg-gray-700 text-red-500 px-2 py-1 rounded text-xs">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    function openMenuModal(mode, menuId = null) {
-      if (mode === 'add') {
-        document.getElementById('crud-modal-title').innerText = "Tambah Menu Baru";
-        document.getElementById('crud-menu-id').value = "";
-        document.getElementById('crud-menu-code').value = "M" + (menuItems.length + 1).toString().padStart(3, '0');
-        document.getElementById('crud-menu-name').value = "";
-        document.getElementById('crud-menu-cat').value = "";
-        document.getElementById('crud-menu-price').value = "";
-      } else {
-        const item = menuItems.find(m => m.id === menuId);
-        if (!item) return;
-        document.getElementById('crud-modal-title').innerText = "Edit Menu";
-        document.getElementById('crud-menu-id').value = item.id;
-        document.getElementById('crud-menu-code').value = item.code;
-        document.getElementById('crud-menu-name').value = item.name;
-        document.getElementById('crud-menu-cat').value = item.cat;
-        document.getElementById('crud-menu-price').value = item.price;
-      }
-      document.getElementById('modal-menu-crud').classList.remove('hidden');
-    }
-
-    function closeMenuModal() {
-      document.getElementById('modal-menu-crud').classList.add('hidden');
-    }
-
-    function saveMenuCRUD() {
-      const id = document.getElementById('crud-menu-id').value || 'M' + Date.now();
-      const code = document.getElementById('crud-menu-code').value.trim();
-      const name = document.getElementById('crud-menu-name').value.trim();
-      const cat = document.getElementById('crud-menu-cat').value.trim().toUpperCase();
-      const price = parseInt(document.getElementById('crud-menu-price').value) || 0;
-
-      if (!code || !name || !cat || price <= 0) {
-        alert("Harap isi seluruh field menu dengan benar!");
-        return;
-      }
-
-      const updated = [...menuItems.filter(m => m.id !== id), { id, code, name, cat, price }];
-      db.ref('menu_items').set(updated, (err) => {
-        if (!err) closeMenuModal();
-      });
-    }
-
-    function deleteMenuCRUD(menuId) {
-      if (!confirm("Yakin ingin menghapus menu ini?")) return;
-      const updated = menuItems.filter(m => m.id !== menuId);
-      db.ref('menu_items').set(updated);
-    }
-
-    // --- KITCHEN DISPLAY SYSTEM (KDS) ---
-    function renderKitchenDisplay() {
-      const grid = document.getElementById('kitchen-orders-grid');
-      const tbody = document.getElementById('kitchen-history-tbody');
-      const today = shiftInfo.date;
-
-      const activeOrders = transactions.filter(t => t.date === today && t.status !== 'CANCELLED').reverse();
-
-      if (activeOrders.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-400">
-            <i class="fa-solid fa-utensils text-4xl mb-2 opacity-40"></i>
-            <p class="font-bold">Tidak ada pesanan aktif di dapur</p>
-          </div>
-        `;
-      } else {
-        grid.innerHTML = activeOrders.map(t => `
-          <div class="bg-white dark:bg-gray-800 border-2 ${t.kitchenStatus === 'SELESAI' ? 'border-emerald-500/50' : 'border-yellow-500'} rounded-2xl p-4 shadow-md flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
-                <div>
-                  <span class="font-bold text-sm text-brand-600 dark:text-brand-400 block">${t.code}</span>
-                  <span class="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400">${t.orderType === 'DINE_IN' ? t.table : 'TAKE AWAY'}</span>
-                </div>
-                <span class="text-xs text-gray-500"><i class="fa-solid fa-clock mr-1"></i>${t.time}</span>
-              </div>
-              <ul class="space-y-1.5 text-xs font-semibold text-gray-800 dark:text-gray-200">
-                ${t.items.map(i => `
-                  <li class="flex justify-between">
-                    <span>${i.name}</span>
-                    <span class="text-brand-600 dark:text-brand-400 font-extrabold text-sm">x${i.qty}</span>
-                  </li>
-                `).join('')}
-              </ul>
-              ${t.note ? `<div class="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-[11px] text-yellow-800 dark:text-yellow-300 font-medium">Catatan: ${t.note}</div>` : ''}
-            </div>
-            <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-              <button onclick="toggleKitchenStatus('${t.code}', '${t.kitchenStatus === 'SELESAI' ? 'PROSES' : 'SELESAI'}')" class="w-full py-2 rounded-xl font-bold text-xs shadow transition ${t.kitchenStatus === 'SELESAI' ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-yellow-500 hover:bg-yellow-400 text-gray-900'}">
-                Status: ${t.kitchenStatus === 'SELESAI' ? '🟢 SELESAI' : '🟡 PROSES...'}
-              </button>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      tbody.innerHTML = activeOrders.map(t => `
-        <tr>
-          <td class="p-2.5">${t.time}</td>
-          <td class="p-2.5 font-bold">${t.code}</td>
-          <td class="p-2.5 font-bold text-brand-600 dark:text-brand-400">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
-          <td class="p-2.5">${t.items.map(i => `${i.name} (x${i.qty})`).join(', ')} ${t.note ? `[Catatan: ${t.note}]` : ''}</td>
-          <td class="p-2.5 font-bold ${t.kitchenStatus === 'SELESAI' ? 'text-emerald-500' : 'text-yellow-500'}">${t.kitchenStatus || 'PROSES'}</td>
-          <td class="p-2.5 text-center">
-            <button onclick="printKitchenTicket('${t.code}')" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-2 py-1 rounded text-xs">
-              <i class="fa-solid fa-print"></i> Tiket Dapur
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    function toggleKitchenStatus(code, status) {
-      db.ref(`transactions/${code}`).update({ kitchenStatus: status });
-    }
-
-    function printKitchenTicket(code) {
-      const trx = transactions.find(t => t.code === code);
-      if (trx) triggerReceiptPrint(trx, 'kitchen');
-    }
-
-    // --- EXPORT & RESET ---
-    function exportToExcel() {
-      const start = document.getElementById('filter-start-date').value;
-      const end = document.getElementById('filter-end-date').value;
-
-      const filtered = transactions.filter(t => {
-        if (!start || !end) return true;
-        return t.date >= start && t.date <= end;
-      });
-
-      if (filtered.length === 0) {
-        alert("Tidak ada data transaksi!");
-        return;
-      }
-
-      const excelRows = [];
-      filtered.forEach(t => {
-        t.items.forEach(item => {
-          excelRows.push({
-            "Tanggal": t.date,
-            "Waktu": t.time,
-            "Kode Transaksi": t.code,
-            "Kasir": t.kasir,
-            "Tipe Pesanan": t.orderType,
-            "Meja": t.table || '-',
-            "Kode Menu": item.code || '-',
-            "Nama Menu": item.name,
-            "Harga": item.price,
-            "Qty": item.qty,
-            "Subtotal": item.price * item.qty,
-            "Metode Pembayaran": t.paymentMethod,
-            "Catatan Pesanan": t.note || '-',
-            "Status": t.status
-          });
-        });
-      });
-
-      const worksheet = XLSX.utils.json_to_sheet(excelRows);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Penjualan");
-      XLSX.writeFile(workbook, `Laporan_RajaRasa_${start}_smd_${end}.xlsx`);
-    }
-
-    function resetSystemDataPrompt() {
-      const pin = prompt("Masukkan Kode PIN Rahasia Manager untuk RESET:");
-      if (pin === '1240') {
-        if (confirm("PERINGATAN: Seluruh data penjualan akan dihapus permanen!")) {
-          db.ref('transactions').remove();
-        }
-      } else if (pin !== null) {
-        alert("PIN Salah!");
-      }
-    }
-
-    // --- UTILS ---
-    function formatRupiah(num) {
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
-    }
-
-    function formatRupiahInput(input) {
-      let value = input.value.replace(/[^0-9]/g, '');
-      if (value) {
-        const formatted = new Intl.NumberFormat('id-ID').format(parseInt(value));
-        input.value = `Rp ${formatted}`;
-      } else {
-        input.value = '';
-      }
-    }
-
-    function formatDateIndo(dateStr) {
-      if (!dateStr) return '';
-      const [y, m, d] = dateStr.split('-');
-      return `${d}/${m}/${y}`;
-    }
-  </script>
-</body>
-</html>
+            <button onclick="reprintReceipt('${t.code}')" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded
