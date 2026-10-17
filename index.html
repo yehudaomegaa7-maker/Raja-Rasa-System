@@ -346,7 +346,7 @@
         </div>
         <div class="flex items-center gap-2">
           <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow">
-            <i class="fa-solid fa-file-excel"></i> Export Sales XLS
+            <i class="fa-solid fa-file-excel"></i> Export XLS (Multi-baris)
           </button>
           <button onclick="resetSystemDataPrompt()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow">
             <i class="fa-solid fa-triangle-exclamation"></i> Reset Penjualan
@@ -366,37 +366,17 @@
           <button onclick="resetDateFilter()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-lg">Reset Filter</button>
         </div>
 
-        <!-- Metric Cards 1: Total Omzet Penjualan + Breakdown Cash / QR / Transfer (REVISI MANAGER) -->
-        <div class="lg:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm flex flex-col justify-between">
-          <div>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Total Omzet Penjualan</p>
-            <h3 id="manager-metric-omzet" class="text-2xl font-extrabold text-brand-600 dark:text-brand-500 mt-1">Rp 0</h3>
-          </div>
-          <!-- Uraian Nominal Pembelian Cash, QRIS, & Transfer -->
-          <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 space-y-1 text-xs">
-            <div class="flex justify-between items-center text-gray-600 dark:text-gray-300">
-              <span><i class="fa-solid fa-money-bill-wave text-emerald-500 mr-1"></i> Cash:</span>
-              <strong id="manager-omzet-cash" class="text-emerald-600 dark:text-emerald-400">Rp 0</strong>
-            </div>
-            <div class="flex justify-between items-center text-gray-600 dark:text-gray-300">
-              <span><i class="fa-solid fa-qrcode text-yellow-500 mr-1"></i> QR Mandiri:</span>
-              <strong id="manager-omzet-qris" class="text-yellow-600 dark:text-yellow-400">Rp 0</strong>
-            </div>
-            <div class="flex justify-between items-center text-gray-600 dark:text-gray-300">
-              <span><i class="fa-solid fa-building-columns text-blue-500 mr-1"></i> Trf Mandiri:</span>
-              <strong id="manager-omzet-transfer" class="text-blue-600 dark:text-blue-400">Rp 0</strong>
-            </div>
-          </div>
+        <!-- Metric Cards -->
+        <div class="lg:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm">
+          <p class="text-xs text-gray-500 dark:text-gray-400">Total Omzet Penjualan</p>
+          <h3 id="manager-metric-omzet" class="text-2xl font-extrabold text-brand-600 dark:text-brand-500 mt-1">Rp 0</h3>
+          <p class="text-[10px] text-gray-400 mt-1">*Sesuai rentang tanggal dipilih</p>
         </div>
-
-        <!-- Metric Cards 2: Transaksi -->
         <div class="lg:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm">
           <p class="text-xs text-gray-500 dark:text-gray-400">Total Transaksi Sukses</p>
           <h3 id="manager-metric-trx" class="text-2xl font-extrabold text-emerald-500 mt-1">0</h3>
           <p class="text-[10px] text-gray-400 mt-1">Transaksi Batal: <span id="manager-metric-batal" class="text-red-500">0</span></p>
         </div>
-
-        <!-- Metric Cards 3: Menu Terlaris -->
         <div class="lg:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm">
           <p class="text-xs text-gray-500 dark:text-gray-400">Menu Terlaris</p>
           <h3 id="manager-metric-topitem" class="text-lg font-bold text-yellow-600 dark:text-yellow-400 mt-1 truncate">-</h3>
@@ -448,19 +428,13 @@
         </div>
       </div>
 
-      <!-- Menu Management (CRUD 132 Menu + EXPORT MENU XLS REVISI MANAGER) -->
+      <!-- Menu Management (CRUD 132 Menu) -->
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl space-y-4 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3 gap-2">
+        <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3">
           <h3 class="font-bold text-gray-800 dark:text-gray-200 text-sm"><i class="fa-solid fa-utensils text-brand-500"></i> Kelola Master Menu (CRUD 132 Item)</h3>
-          <div class="flex items-center gap-2">
-            <!-- Tombol Export Menu XLS -->
-            <button onclick="exportMenuListToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow">
-              <i class="fa-solid fa-file-excel"></i> Export Menu (XLS)
-            </button>
-            <button onclick="openMenuModal('add')" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow">
-              <i class="fa-solid fa-plus"></i> Tambah Menu Baru
-            </button>
-          </div>
+          <button onclick="openMenuModal('add')" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow">
+            <i class="fa-solid fa-plus"></i> Tambah Menu Baru
+          </button>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-xs text-left text-gray-700 dark:text-gray-300">
@@ -542,7 +516,7 @@
 
   <!-- ==================== MODALS ==================== -->
 
-  <!-- PIN Access Modal -->
+  <!-- PIN Access Modal (FIX POP-UP MODAL) -->
   <div id="modal-pin" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl text-center">
       <div id="pin-icon-box" class="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 flex items-center justify-center mx-auto text-xl">
@@ -867,4 +841,944 @@
       voiceEnabled = !voiceEnabled;
       const btn = document.getElementById('btn-toggle-voice');
       if (voiceEnabled) {
-        btn.className = "text-xs px-3 py-1.5
+        btn.className = "text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow";
+        btn.innerHTML = `<i class="fa-solid fa-volume-high"></i> Suara: ON`;
+      } else {
+        btn.className = "text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-gray-400 text-white shadow";
+        btn.innerHTML = `<i class="fa-solid fa-volume-xmark"></i> Suara: OFF`;
+      }
+    }
+
+    function playVoiceNotification() {
+      if ('speechSynthesis' in window) {
+        const msg = new SpeechSynthesisUtterance("Pesanan Masuk!");
+        msg.lang = 'id-ID';
+        msg.rate = 1.0;
+        window.speechSynthesis.speak(msg);
+      }
+    }
+
+    // --- AUTHENTICATION & ROOM SWITCHING (POP-UP LANDING FIX) ---
+    function promptRoomPIN(room) {
+      pendingPINRoom = room;
+      
+      const titleMap = {
+        kasir: "Akses Ruang Kasir",
+        manager: "Akses Ruang Manager",
+        kitchen: "Akses Ruang Kitchen"
+      };
+
+      const pinInput = document.getElementById('input-pin-code');
+      if (pinInput) pinInput.value = "";
+
+      const titleElem = document.getElementById('pin-modal-title');
+      if (titleElem) {
+        titleElem.innerText = titleMap[room] || "Akses Ruangan";
+      }
+
+      const modal = document.getElementById('modal-pin');
+      if (modal) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          if (pinInput) pinInput.focus();
+        }, 100);
+      }
+    }
+
+    function closePINModal() {
+      const modal = document.getElementById('modal-pin');
+      if (modal) modal.classList.add('hidden');
+      pendingPINRoom = null;
+    }
+
+    function submitPIN() {
+      const pinInput = document.getElementById('input-pin-code');
+      const pin = pinInput ? pinInput.value : '';
+      const validPINs = { kasir: "1234", manager: "1240", kitchen: "4321" };
+
+      if (pendingPINRoom && pin === validPINs[pendingPINRoom]) {
+        activeRoom = pendingPINRoom;
+        closePINModal();
+        enterRoom(activeRoom);
+      } else {
+        alert("Kode PIN Salah!");
+        if (pinInput) pinInput.value = "";
+      }
+    }
+
+    function enterRoom(room) {
+      document.getElementById('screen-landing').classList.add('hidden');
+      document.getElementById('main-header').classList.remove('hidden');
+
+      document.getElementById('workspace-kasir').classList.add('hidden');
+      document.getElementById('workspace-manager').classList.add('hidden');
+      document.getElementById('workspace-kitchen').classList.add('hidden');
+
+      const nameMap = { kasir: "Ruang Kasir", manager: "Ruang Manager", kitchen: "Ruang Kitchen" };
+      document.getElementById('badge-room-name').innerText = nameMap[room];
+
+      if (room === 'kasir') {
+        document.getElementById('workspace-kasir').classList.remove('hidden');
+      } else if (room === 'manager') {
+        document.getElementById('workspace-manager').classList.remove('hidden');
+        renderManagerDashboard();
+      } else if (room === 'kitchen') {
+        document.getElementById('workspace-kitchen').classList.remove('hidden');
+        renderKitchenDisplay();
+      }
+    }
+
+    function exitToLanding() {
+      activeRoom = null;
+      document.getElementById('main-header').classList.add('hidden');
+      document.getElementById('workspace-kasir').classList.add('hidden');
+      document.getElementById('workspace-manager').classList.add('hidden');
+      document.getElementById('workspace-kitchen').classList.add('hidden');
+      document.getElementById('screen-landing').classList.remove('hidden');
+    }
+
+    // --- TIPE PESANAN & MEJA ---
+    function setOrderType(type) {
+      orderType = type;
+      const btnDine = document.getElementById('btn-type-dinein');
+      const btnTake = document.getElementById('btn-type-takeaway');
+      const boxTable = document.getElementById('table-select-box');
+
+      if (type === 'DINE_IN') {
+        btnDine.className = "px-3 py-1 text-xs font-bold rounded-lg border border-brand-500 bg-brand-500 text-white transition shadow";
+        btnTake.className = "px-3 py-1 text-xs font-bold rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 transition";
+        boxTable.classList.remove('hidden');
+      } else {
+        btnTake.className = "px-3 py-1 text-xs font-bold rounded-lg border border-brand-500 bg-brand-500 text-white transition shadow";
+        btnDine.className = "px-3 py-1 text-xs font-bold rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 transition";
+        boxTable.classList.add('hidden');
+      }
+    }
+
+    // --- KASIR SHIFT MODAL ---
+    function openKasirLoginModal() {
+      document.getElementById('shift-kasir-name').value = shiftInfo.kasirName;
+      document.getElementById('shift-modal-awal').value = formatRupiah(shiftInfo.modalAwal);
+      document.getElementById('shift-real-date').value = shiftInfo.date;
+      document.getElementById('modal-kasir-shift').classList.remove('hidden');
+    }
+
+    function closeKasirLoginModal() {
+      document.getElementById('modal-kasir-shift').classList.add('hidden');
+    }
+
+    function saveKasirShift() {
+      const name = document.getElementById('shift-kasir-name').value.trim() || "Kasir Utama";
+      const modalRaw = document.getElementById('shift-modal-awal').value.replace(/[^0-9]/g, '');
+      const date = document.getElementById('shift-real-date').value;
+
+      shiftInfo = { kasirName: name, modalAwal: parseInt(modalRaw) || 0, date: date };
+
+      document.getElementById('disp-kasir-name').innerText = shiftInfo.kasirName;
+      document.getElementById('disp-modal-awal').innerText = formatRupiah(shiftInfo.modalAwal);
+      document.getElementById('disp-real-date').innerText = formatDateIndo(shiftInfo.date);
+
+      closeKasirLoginModal();
+    }
+
+    // --- MENU CATALOG & FILTERS ---
+    function renderMenuCatalog() {
+      const grid = document.getElementById('menu-grid');
+      const search = document.getElementById('search-menu').value.toLowerCase();
+      
+      const categories = ["SEMUA", ...new Set(menuItems.map(item => item.cat))];
+      renderCategoryBar(categories);
+
+      const filtered = menuItems.filter(item => {
+        const matchesCat = activeCategory === "SEMUA" || item.cat === activeCategory;
+        const matchesSearch = item.name.toLowerCase().includes(search) || item.code.toLowerCase().includes(search);
+        return matchesCat && matchesSearch;
+      });
+
+      grid.innerHTML = filtered.map(item => `
+        <div onclick="addToCart('${item.id}')" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-xl p-3 flex flex-col justify-between cursor-pointer transition shadow-sm hover:shadow-brand-500/10 group">
+          <div>
+            <span class="text-[9px] font-semibold bg-gray-100 dark:bg-gray-700 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded-full">${item.cat}</span>
+            <h4 class="font-bold text-xs text-gray-800 dark:text-gray-100 mt-2 group-hover:text-brand-500 transition line-clamp-2">${item.name}</h4>
+            <p class="text-[9px] text-gray-400">Kode: ${item.code}</p>
+          </div>
+          <div class="mt-3 flex items-center justify-between border-t border-gray-100 dark:border-gray-700/50 pt-2">
+            <span class="font-extrabold text-xs text-brand-600 dark:text-brand-500">${formatRupiah(item.price)}</span>
+            <span class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-600/20 text-brand-600 dark:text-brand-500 group-hover:bg-brand-500 group-hover:text-white flex items-center justify-center text-[10px] transition"><i class="fa-solid fa-plus"></i></span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderCategoryBar(categories) {
+      const bar = document.getElementById('category-bar');
+      bar.innerHTML = categories.map(cat => `
+        <button onclick="setCategory('${cat}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${activeCategory === cat ? 'bg-brand-600 text-white shadow' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-brand-500'}">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    function setCategory(cat) {
+      activeCategory = cat;
+      renderMenuCatalog();
+    }
+
+    // --- CART SYSTEM ---
+    function addToCart(menuId) {
+      const item = menuItems.find(m => m.id === menuId);
+      if (!item) return;
+
+      const existing = cart.find(c => c.id === menuId);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ ...item, qty: 1 });
+      }
+      renderCart();
+    }
+
+    function updateCartQty(menuId, delta) {
+      const item = cart.find(c => c.id === menuId);
+      if (!item) return;
+      item.qty += delta;
+      if (item.qty <= 0) {
+        cart = cart.filter(c => c.id !== menuId);
+      }
+      renderCart();
+    }
+
+    function clearCart() {
+      cart = [];
+      selectedPayment = "";
+      resetPaymentButtonStyles();
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items-container');
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-gray-400 text-xs">
+            <i class="fa-solid fa-basket-shopping text-3xl mb-2 opacity-40"></i>
+            <p>Keranjang kosong</p>
+          </div>
+        `;
+      } else {
+        container.innerHTML = cart.map(item => `
+          <div class="py-2 flex items-center justify-between text-xs">
+            <div class="pr-2 flex-1">
+              <h5 class="font-bold text-gray-800 dark:text-gray-200 truncate">${item.name}</h5>
+              <span class="text-gray-400 text-[10px]">${formatRupiah(item.price)}</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="updateCartQty('${item.id}', -1)" class="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center font-bold hover:bg-gray-300">-</button>
+              <span class="font-bold text-gray-800 dark:text-white w-4 text-center">${item.qty}</span>
+              <button onclick="updateCartQty('${item.id}', 1)" class="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center font-bold hover:bg-gray-300">+</button>
+              <span class="font-extrabold text-brand-600 dark:text-brand-400 ml-2 w-14 text-right">${formatRupiah(item.price * item.qty)}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const totalQty = cart.reduce((sum, i) => sum + i.qty, 0);
+      const totalPrice = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+
+      document.getElementById('cart-total-qty').innerText = totalQty;
+      document.getElementById('cart-total-price').innerText = formatRupiah(totalPrice);
+
+      validateCheckoutButton();
+    }
+
+    // --- PAYMENT METHOD SELECTION ---
+    function selectPaymentMethod(method) {
+      if (cart.length === 0) {
+        alert("Pilih menu makanan/minuman terlebih dahulu!");
+        return;
+      }
+
+      selectedPayment = method;
+
+      const btnCash = document.getElementById('pay-btn-cash');
+      const btnQris = document.getElementById('pay-btn-qris');
+      const btnTransfer = document.getElementById('pay-btn-transfer');
+
+      const allBtns = [btnCash, btnQris, btnTransfer];
+
+      allBtns.forEach(b => {
+        b.className = "pay-method-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-center transition-all duration-200 opacity-30 blur-[1px] scale-95";
+      });
+
+      const activeBtn = document.getElementById(`pay-btn-${method}`);
+      if (activeBtn) {
+        activeBtn.className = "pay-method-btn py-2 text-xs font-extrabold rounded-xl border-2 border-brand-500 bg-white text-gray-900 shadow-md ring-2 ring-brand-500/30 text-center transition-all duration-200 opacity-100 blur-0 scale-100";
+      }
+
+      const area = document.getElementById('payment-input-area');
+
+      if (method === 'cash') {
+        area.innerHTML = `
+          <div class="space-y-1.5 bg-brand-50/50 dark:bg-gray-900/60 p-2.5 rounded-xl border border-brand-200 dark:border-gray-700">
+            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300">Nominal Tunai Diterima (Rp):</label>
+            <input type="text" id="cash-given-input" oninput="formatRupiahInput(this); calculateChange()" placeholder="Rp 0" class="w-full p-2 bg-white dark:bg-gray-800 border-2 border-brand-400 rounded-lg text-sm text-gray-900 dark:text-white font-extrabold focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <div class="flex justify-between text-xs pt-1 font-bold">
+              <span class="text-gray-600 dark:text-gray-400">Kembalian:</span>
+              <span id="cash-change-disp" class="text-emerald-600 dark:text-emerald-400 text-sm">Rp 0</span>
+            </div>
+          </div>
+        `;
+      } else if (method === 'qris') {
+        area.innerHTML = `
+          <div class="bg-gray-50 dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-center space-y-1">
+            <p class="text-[10px] font-bold text-brand-600 dark:text-brand-400">QRIS Mandiri Standar Nasional</p>
+            <div class="bg-white p-1.5 rounded-lg inline-block mx-auto border border-gray-300">
+              <img src="qr mandiri.jpeg" alt="QRIS Mandiri" class="w-28 h-28 object-contain mx-auto" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=ID1025442572570'">
+            </div>
+            <p class="text-[10px] font-semibold text-gray-800 dark:text-gray-200">RAJA RASA RESTO</p>
+          </div>
+        `;
+      } else if (method === 'transfer') {
+        area.innerHTML = `
+          <div class="bg-gray-50 dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs space-y-1">
+            <p class="font-bold text-brand-600 dark:text-brand-400">Bank Mandiri Transfer</p>
+            <p class="text-gray-700 dark:text-gray-300">No. Rekening: <strong class="text-gray-900 dark:text-white select-all font-mono">1080020840832</strong></p>
+            <p class="text-gray-400 text-[10px]">Atas Nama: RAJA RASA RESTO</p>
+          </div>
+        `;
+      }
+      validateCheckoutButton();
+    }
+
+    function resetPaymentButtonStyles() {
+      const allBtns = document.querySelectorAll('.pay-method-btn');
+      allBtns.forEach(b => {
+        b.className = "pay-method-btn py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-center transition-all duration-200 opacity-100 blur-0 scale-100";
+      });
+      document.getElementById('payment-input-area').innerHTML = "";
+    }
+
+    function calculateChange() {
+      const totalPrice = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+      const rawGiven = document.getElementById('cash-given-input')?.value.replace(/[^0-9]/g, '') || '0';
+      const given = parseInt(rawGiven) || 0;
+      const change = given - totalPrice;
+
+      const disp = document.getElementById('cash-change-disp');
+      if (disp) {
+        disp.innerText = formatRupiah(change >= 0 ? change : 0);
+        disp.className = change >= 0 ? "text-emerald-600 dark:text-emerald-400 font-extrabold text-sm" : "text-red-500 font-bold text-xs";
+      }
+      validateCheckoutButton();
+    }
+
+    function validateCheckoutButton() {
+      const btn = document.getElementById('btn-process-checkout');
+      const totalPrice = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+
+      if (cart.length === 0 || !selectedPayment) {
+        btn.disabled = true;
+        return;
+      }
+
+      if (selectedPayment === 'cash') {
+        const rawGiven = document.getElementById('cash-given-input')?.value.replace(/[^0-9]/g, '') || '0';
+        const given = parseInt(rawGiven) || 0;
+        btn.disabled = given < totalPrice;
+      } else {
+        btn.disabled = false;
+      }
+    }
+
+    // --- CHECKOUT PROCESS ---
+    function processCheckout() {
+      if (cart.length === 0) return;
+
+      const trxCode = 'TRX' + Date.now().toString().slice(-6);
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = shiftInfo.date;
+      const noteStr = document.getElementById('order-note-input')?.value.trim() || '';
+      
+      const tableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away';
+
+      const totalPrice = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+      let given = totalPrice;
+      let change = 0;
+
+      if (selectedPayment === 'cash') {
+        const rawGiven = document.getElementById('cash-given-input').value.replace(/[^0-9]/g, '');
+        given = parseInt(rawGiven) || totalPrice;
+        change = given - totalPrice;
+      }
+
+      const transactionData = {
+        code: trxCode,
+        date: dateStr,
+        time: timeStr,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        kasir: shiftInfo.kasirName,
+        orderType: orderType,
+        table: tableNum,
+        items: cart,
+        note: noteStr,
+        total: totalPrice,
+        paymentMethod: selectedPayment,
+        cashGiven: given,
+        cashChange: change,
+        status: 'SUCCESS',
+        kitchenStatus: 'PROSES',
+        cancelReason: ''
+      };
+
+      db.ref(`transactions/${trxCode}`).set(transactionData, (err) => {
+        if (!err) {
+          triggerReceiptPrint(transactionData, 'customer');
+
+          cart = [];
+          selectedPayment = "";
+          resetPaymentButtonStyles();
+          document.getElementById('order-note-input').value = "";
+          renderCart();
+          alert(`Transaksi ${trxCode} (${tableNum}) Berhasil Diselesaikan!`);
+        }
+      });
+    }
+
+    // --- RECEIPT PRINTING & PREVIEW MODAL (ALAMAT REVISI NO 152A) ---
+    function triggerReceiptPrint(trx, mode = 'customer') {
+      const isCustomer = (mode === 'customer');
+      const tableInfo = (trx.orderType === 'DINE_IN') ? `[DINE IN - ${trx.table}]` : `[TAKE AWAY]`;
+      
+      const receiptHTML = `
+        <div id="receipt-card-content" style="background: #fff; color: #000; padding: 12px; font-family: monospace; font-size: 11px; max-width: 260px; margin: 0 auto; text-align: left; border: 1px solid #ccc;">
+          <div style="text-align: center; font-weight: bold;">
+            <div style="font-size: 15px;">👑 RAJA RASA 👑</div>
+            <div style="font-size: 12px;">COFFEE & RESTO</div>
+            <div style="font-size: 9px; font-weight: normal;">Jl. Setia Budi No. 152A, BDG</div>
+            <div style="font-size: 9px; font-weight: normal;">Telp: 0823-8697-9900</div>
+            <div>--------------------------------</div>
+          </div>
+          <div style="font-size: 10px; margin-bottom: 4px;">
+            No. Trx : ${trx.code}<br>
+            Tgl     : ${trx.date} ${trx.time}<br>
+            Kasir   : ${trx.kasir}<br>
+            Tipe    : <strong>${tableInfo}</strong>
+          </div>
+          <div>--------------------------------</div>
+          <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin-bottom: 4px;">
+            ${trx.items.map(i => `
+              <tr>
+                <td colspan="2" style="font-weight: bold;">${i.name}</td>
+              </tr>
+              <tr>
+                <td>${i.qty} x${formatRupiah(i.price)}</td>
+                <td style="text-align: right;">${formatRupiah(i.price * i.qty)}</td>
+              </tr>
+            `).join('')}
+          </table>
+          ${trx.note ? `<div style="font-size: 9px; margin-bottom: 4px; font-weight: bold;">Catatan: ${trx.note}</div>` : ''}
+          <div>--------------------------------</div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px;">
+            <span>TOTAL:</span>
+            <span>${formatRupiah(trx.total)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 9px;">
+            <span>Metode:</span>
+            <span style="text-transform: uppercase;">${trx.paymentMethod}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 9px;">
+            <span>Bayar:</span>
+            <span>${formatRupiah(trx.cashGiven)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 9px;">
+            <span>Kembali:</span>
+            <span>${formatRupiah(trx.cashChange)}</span>
+          </div>
+          <div>--------------------------------</div>
+          <div style="text-align: center; font-size: 9px; margin-top: 6px;">
+            Terima Kasih Atas Kunjungan Anda!
+          </div>
+        </div>
+      `;
+
+      document.getElementById('printable-area').innerHTML = receiptHTML;
+      showReceiptPreviewModal(receiptHTML);
+    }
+
+    function showReceiptPreviewModal(content) {
+      let modal = document.getElementById('modal-receipt-preview');
+      if (!modal) {
+        const modalHTML = `
+          <div id="modal-receipt-preview" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl max-w-sm w-full space-y-4 text-center shadow-2xl">
+              <h3 class="font-bold text-sm text-gray-800 dark:text-white flex items-center justify-center gap-2">
+                <i class="fa-solid fa-receipt text-brand-500"></i> Struk Transaksi (Preview)
+              </h3>
+              <div id="receipt-modal-body" class="max-h-[60vh] overflow-y-auto p-2 bg-gray-100 dark:bg-gray-900 rounded-xl"></div>
+              <div class="flex gap-2">
+                <button onclick="closeReceiptPreviewModal()" class="w-1/2 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold">Tutup</button>
+                <button onclick="executeBrowserPrint()" class="w-1/2 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-print"></i> Cetak / PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        modal = document.getElementById('modal-receipt-preview');
+      }
+      
+      document.getElementById('receipt-modal-body').innerHTML = content;
+      modal.classList.remove('hidden');
+    }
+
+    function closeReceiptPreviewModal() {
+      document.getElementById('modal-receipt-preview').classList.add('hidden');
+    }
+
+    function executeBrowserPrint() {
+      window.print();
+    }
+
+    // --- BLUETOOTH PRINTER CONNECTOR ---
+    async function connectBTPrinter(target) {
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+        });
+        if (target === 'kasir') {
+          btPrinterKasir = device;
+          alert("Printer Kasir Terhubung: " + device.name);
+        } else {
+          btPrinterKitchen = device;
+          alert("Printer Dapur Terhubung: " + device.name);
+        }
+      } catch (err) {
+        alert("Web Bluetooth: " + err.message);
+      }
+    }
+
+    // --- KASIR HISTORY TABLE ---
+    function renderKasirHistory() {
+      const tbody = document.getElementById('kasir-history-tbody');
+      const today = shiftInfo.date;
+      const todayTrx = transactions.filter(t => t.date === today).reverse();
+
+      if (todayTrx.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-400">Belum ada transaksi hari ini</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = todayTrx.map(t => `
+        <tr class="${t.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400 line-through' : ''}">
+          <td class="p-2.5 font-bold">${t.code}</td>
+          <td class="p-2.5">${t.time}</td>
+          <td class="p-2.5 font-bold text-brand-600 dark:text-brand-400">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
+          <td class="p-2.5">${t.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</td>
+          <td class="p-2.5 font-bold">${formatRupiah(t.total)}</td>
+          <td class="p-2.5 uppercase">${t.paymentMethod}</td>
+          <td class="p-2.5">
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${t.status === 'CANCELLED' ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400'}">
+              ${t.status}
+            </span>
+          </td>
+          <td class="p-2.5 text-center space-x-1">
+            <button onclick="reprintReceipt('${t.code}')" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-2 py-1 rounded text-[10px] font-bold">
+              <i class="fa-solid fa-print"></i> Struk
+            </button>
+            ${t.status !== 'CANCELLED' ? `
+              <button onclick="updateTrxStatus('${t.code}', 'CANCELLED')" class="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 px-2 py-1 rounded text-[10px] font-bold">
+                Batalkan
+              </button>
+            ` : ''}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function reprintReceipt(code) {
+      const trx = transactions.find(t => t.code === code);
+      if (trx) triggerReceiptPrint(trx, 'customer');
+    }
+
+    function updateTrxStatus(code, newStatus) {
+      db.ref(`transactions/${code}`).update({ status: newStatus });
+    }
+
+    // --- MANAGER DASHBOARD & CHARTS (PERSENTASE PIE CHART) ---
+    let barChartInstance = null;
+    let pieChartInstance = null;
+
+    function renderManagerDashboard() {
+      const start = document.getElementById('filter-start-date').value;
+      const end = document.getElementById('filter-end-date').value;
+
+      const filtered = transactions.filter(t => {
+        if (!start || !end) return true;
+        return t.date >= start && t.date <= end;
+      });
+
+      const successTrx = filtered.filter(t => t.status !== 'CANCELLED');
+      const cancelledTrx = filtered.filter(t => t.status === 'CANCELLED');
+      const totalOmzet = successTrx.reduce((sum, t) => sum + t.total, 0);
+
+      document.getElementById('manager-metric-omzet').innerText = formatRupiah(totalOmzet);
+      document.getElementById('manager-metric-trx').innerText = successTrx.length;
+      document.getElementById('manager-metric-batal').innerText = cancelledTrx.length;
+
+      const itemCounts = {};
+      successTrx.forEach(t => {
+        t.items.forEach(i => {
+          itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty;
+        });
+      });
+      const sortedItems = Object.entries(itemCounts).sort((a,b) => b[1] - a[1]);
+      document.getElementById('manager-metric-topitem').innerText = sortedItems[0] ? `${sortedItems[0][0]} (${sortedItems[0][1]} porsi)` : '-';
+
+      renderBarChart(filtered);
+      renderPieChart(sortedItems);
+      renderManagerHistoryTable(filtered);
+    }
+
+    function renderBarChart(dataList) {
+      const ctx = document.getElementById('salesBarChart').getContext('2d');
+      const dateMap = {};
+      dataList.forEach(t => {
+        if (t.status !== 'CANCELLED') {
+          dateMap[t.date] = (dateMap[t.date] || 0) + t.total;
+        }
+      });
+
+      const labels = Object.keys(dateMap).sort();
+      const values = labels.map(l => dateMap[l]);
+
+      if (barChartInstance) barChartInstance.destroy();
+
+      barChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels.length ? labels : ['No Data'],
+          datasets: [{
+            label: 'Omzet Penjualan (Rp)',
+            data: values.length ? values : [0],
+            backgroundColor: '#ea580c',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function renderPieChart(sortedItems) {
+      const ctx = document.getElementById('topMenuPieChart').getContext('2d');
+      const top5 = sortedItems.slice(0, 5);
+      const labels = top5.map(i => i[0]);
+      const values = top5.map(i => i[1]);
+      const grandTotal = values.reduce((sum, val) => sum + val, 0);
+
+      if (pieChartInstance) pieChartInstance.destroy();
+
+      pieChartInstance = new Chart(ctx, {
+        type: 'pie',
+        plugins: [ChartDataLabels],
+        data: {
+          labels: labels.length ? labels : ['Belum Ada Data'],
+          datasets: [{
+            data: values.length ? values : [1],
+            backgroundColor: ['#f97316', '#3b82f6', '#10b981', '#eab308', '#8b5cf6']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            datalabels: {
+              formatter: (value, context) => {
+                if (grandTotal === 0) return '';
+                const percentage = ((value / grandTotal) * 100).toFixed(1) + '%';
+                return percentage;
+              },
+              color: '#fff',
+              font: { weight: 'bold', size: 11 }
+            }
+          }
+        }
+      });
+    }
+
+    function renderManagerHistoryTable(filtered) {
+      const tbody = document.getElementById('manager-history-tbody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-400">Tidak ada data transaksi</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.reverse().map(t => `
+        <tr class="${t.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400 line-through' : ''}">
+          <td class="p-2.5">${t.date} ${t.time}</td>
+          <td class="p-2.5 font-bold">${t.code}</td>
+          <td class="p-2.5">${t.kasir}</td>
+          <td class="p-2.5 font-bold text-brand-600 dark:text-brand-400">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
+          <td class="p-2.5">${t.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</td>
+          <td class="p-2.5 font-bold">${formatRupiah(t.total)}</td>
+          <td class="p-2.5 font-bold">${t.status}</td>
+          <td class="p-2.5 text-center space-x-1">
+            <button onclick="reprintReceipt('${t.code}')" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-[10px] font-bold">
+              <i class="fa-solid fa-print"></i>
+            </button>
+            <button onclick="deleteTransactionManager('${t.code}')" class="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function deleteTransactionManager(code) {
+      if (confirm(`Manager: Yakin ingin menghapus permanen transaksi ${code}?`)) {
+        db.ref(`transactions/${code}`).remove();
+      }
+    }
+
+    function resetDateFilter() {
+      setupDefaultDates();
+      renderManagerDashboard();
+    }
+
+    // --- MANAGER MENU CRUD ---
+    function renderManagerMenuTable() {
+      const tbody = document.getElementById('manager-menu-tbody');
+      tbody.innerHTML = menuItems.map(m => `
+        <tr>
+          <td class="p-2.5 font-mono font-bold">${m.code}</td>
+          <td class="p-2.5 font-bold text-gray-800 dark:text-white">${m.name}</td>
+          <td class="p-2.5">${m.cat}</td>
+          <td class="p-2.5 font-extrabold text-brand-600 dark:text-brand-400">${formatRupiah(m.price)}</td>
+          <td class="p-2.5 text-center space-x-1">
+            <button onclick="openMenuModal('edit', '${m.id}')" class="bg-gray-200 dark:bg-gray-700 text-yellow-600 dark:text-yellow-400 px-2 py-1 rounded text-xs">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="deleteMenuCRUD('${m.id}')" class="bg-gray-200 dark:bg-gray-700 text-red-500 px-2 py-1 rounded text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openMenuModal(mode, menuId = null) {
+      if (mode === 'add') {
+        document.getElementById('crud-modal-title').innerText = "Tambah Menu Baru";
+        document.getElementById('crud-menu-id').value = "";
+        document.getElementById('crud-menu-code').value = "M" + (menuItems.length + 1).toString().padStart(3, '0');
+        document.getElementById('crud-menu-name').value = "";
+        document.getElementById('crud-menu-cat').value = "";
+        document.getElementById('crud-menu-price').value = "";
+      } else {
+        const item = menuItems.find(m => m.id === menuId);
+        if (!item) return;
+        document.getElementById('crud-modal-title').innerText = "Edit Menu";
+        document.getElementById('crud-menu-id').value = item.id;
+        document.getElementById('crud-menu-code').value = item.code;
+        document.getElementById('crud-menu-name').value = item.name;
+        document.getElementById('crud-menu-cat').value = item.cat;
+        document.getElementById('crud-menu-price').value = item.price;
+      }
+      document.getElementById('modal-menu-crud').classList.remove('hidden');
+    }
+
+    function closeMenuModal() {
+      document.getElementById('modal-menu-crud').classList.add('hidden');
+    }
+
+    function saveMenuCRUD() {
+      const id = document.getElementById('crud-menu-id').value || 'M' + Date.now();
+      const code = document.getElementById('crud-menu-code').value.trim();
+      const name = document.getElementById('crud-menu-name').value.trim();
+      const cat = document.getElementById('crud-menu-cat').value.trim().toUpperCase();
+      const price = parseInt(document.getElementById('crud-menu-price').value) || 0;
+
+      if (!code || !name || !cat || price <= 0) {
+        alert("Harap isi seluruh field menu dengan benar!");
+        return;
+      }
+
+      const updated = [...menuItems.filter(m => m.id !== id), { id, code, name, cat, price }];
+      db.ref('menu_items').set(updated, (err) => {
+        if (!err) closeMenuModal();
+      });
+    }
+
+    function deleteMenuCRUD(menuId) {
+      if (!confirm("Yakin ingin menghapus menu ini?")) return;
+      const updated = menuItems.filter(m => m.id !== menuId);
+      db.ref('menu_items').set(updated);
+    }
+
+    // --- RUANG KITCHEN (KDS) REALTIME ---
+    function renderKitchenDisplay() {
+      const grid = document.getElementById('kitchen-orders-grid');
+      const tbody = document.getElementById('kitchen-history-tbody');
+      const today = shiftInfo.date;
+
+      const activeOrders = transactions.filter(t => t.date === today && t.status !== 'CANCELLED').reverse();
+
+      if (activeOrders.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-400">
+            <i class="fa-solid fa-utensils text-4xl mb-2 opacity-40"></i>
+            <p class="font-bold">Tidak ada pesanan aktif di dapur</p>
+          </div>
+        `;
+      } else {
+        grid.innerHTML = activeOrders.map(t => {
+          const isDineIn = t.orderType === 'DINE_IN';
+          const tableText = isDineIn ? t.table : 'TAKE AWAY';
+          
+          return `
+            <div class="bg-white dark:bg-gray-800 border-2 ${t.kitchenStatus === 'SELESAI' ? 'border-emerald-500/50' : 'border-yellow-500'} rounded-2xl p-4 shadow-md flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
+                  <div>
+                    <span class="font-bold text-sm text-brand-600 dark:text-brand-400 block">${t.code}</span>
+                    <span class="text-xs font-black px-2 py-0.5 rounded-md ${isDineIn ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'}">
+                      <i class="fa-solid ${isDineIn ? 'fa-chair' : 'fa-bag-shopping'} mr-1"></i> ${tableText}
+                    </span>
+                  </div>
+                  <span class="text-xs text-gray-500 font-semibold"><i class="fa-solid fa-clock mr-1"></i>${t.time}</span>
+                </div>
+
+                <ul class="space-y-1.5 text-xs font-semibold text-gray-800 dark:text-gray-200">
+                  ${t.items.map(i => `
+                    <li class="flex justify-between border-b border-gray-50 dark:border-gray-700/30 pb-1">
+                      <span>${i.name}</span>
+                      <span class="text-brand-600 dark:text-brand-400 font-extrabold text-sm ml-2">x${i.qty}</span>
+                    </li>
+                  `).join('')}
+                </ul>
+
+                ${t.note ? `
+                  <div class="mt-3 p-2 bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-700 rounded-lg text-xs text-yellow-900 dark:text-yellow-200 font-bold flex items-start gap-1.5">
+                    <i class="fa-solid fa-note-sticky text-yellow-600 mt-0.5"></i>
+                    <span>Catatan: ${t.note}</span>
+                  </div>
+                ` : ''}
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <button onclick="toggleKitchenStatus('${t.code}', '${t.kitchenStatus === 'SELESAI' ? 'PROSES' : 'SELESAI'}')" class="w-full py-2 rounded-xl font-bold text-xs shadow transition ${t.kitchenStatus === 'SELESAI' ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-yellow-500 hover:bg-yellow-400 text-gray-900'}">
+                  Status: ${t.kitchenStatus === 'SELESAI' ? '🟢 SELESAI' : '🟡 PROSES...'}
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      tbody.innerHTML = activeOrders.map(t => `
+        <tr>
+          <td class="p-2.5">${t.time}</td>
+          <td class="p-2.5 font-bold">${t.code}</td>
+          <td class="p-2.5 font-bold text-brand-600 dark:text-brand-400">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
+          <td class="p-2.5">${t.items.map(i => `${i.name} (x${i.qty})`).join(', ')} ${t.note ? `<strong class="text-yellow-600 font-bold block">[Catatan: ${t.note}]</strong>` : ''}</td>
+          <td class="p-2.5 font-bold ${t.kitchenStatus === 'SELESAI' ? 'text-emerald-500' : 'text-yellow-500'}">${t.kitchenStatus || 'PROSES'}</td>
+          <td class="p-2.5 text-center">
+            <button onclick="printKitchenTicket('${t.code}')" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-2 py-1 rounded text-xs">
+              <i class="fa-solid fa-print"></i> Tiket Dapur
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function toggleKitchenStatus(code, status) {
+      db.ref(`transactions/${code}`).update({ kitchenStatus: status });
+    }
+
+    function printKitchenTicket(code) {
+      const trx = transactions.find(t => t.code === code);
+      if (trx) triggerReceiptPrint(trx, 'kitchen');
+    }
+
+    // --- EXPORT & RESET ---
+    function exportToExcel() {
+      const start = document.getElementById('filter-start-date').value;
+      const end = document.getElementById('filter-end-date').value;
+
+      const filtered = transactions.filter(t => {
+        if (!start || !end) return true;
+        return t.date >= start && t.date <= end;
+      });
+
+      if (filtered.length === 0) {
+        alert("Tidak ada data transaksi!");
+        return;
+      }
+
+      const excelRows = [];
+      filtered.forEach(t => {
+        t.items.forEach(item => {
+          excelRows.push({
+            "Tanggal": t.date,
+            "Waktu": t.time,
+            "Kode Transaksi": t.code,
+            "Kasir": t.kasir,
+            "Tipe Pesanan": t.orderType,
+            "Meja": t.table || '-',
+            "Kode Menu": item.code || '-',
+            "Nama Menu": item.name,
+            "Harga": item.price,
+            "Qty": item.qty,
+            "Subtotal": item.price * item.qty,
+            "Metode Pembayaran": t.paymentMethod,
+            "Catatan Pesanan": t.note || '-',
+            "Status": t.status
+          });
+        });
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(excelRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Penjualan");
+      XLSX.writeFile(workbook, `Laporan_RajaRasa_${start}_smd_${end}.xlsx`);
+    }
+
+    function resetSystemDataPrompt() {
+      const pin = prompt("Masukkan Kode PIN Rahasia Manager untuk RESET:");
+      if (pin === '1240') {
+        if (confirm("PERINGATAN: Seluruh data penjualan akan dihapus permanen!")) {
+          db.ref('transactions').remove();
+        }
+      } else if (pin !== null) {
+        alert("PIN Salah!");
+      }
+    }
+
+    // --- UTILS ---
+    function formatRupiah(num) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+    }
+
+    function formatRupiahInput(input) {
+      let value = input.value.replace(/[^0-9]/g, '');
+      if (value) {
+        const formatted = new Intl.NumberFormat('id-ID').format(parseInt(value));
+        input.value = `Rp ${formatted}`;
+      } else {
+        input.value = '';
+      }
+    }
+
+    function formatDateIndo(dateStr) {
+      if (!dateStr) return '';
+      const [y, m, d] = dateStr.split('-');
+      return `${d}/${m}/${y}`;
+    }
+  </script>
+</body>
+</html>
