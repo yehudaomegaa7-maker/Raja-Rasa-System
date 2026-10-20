@@ -921,7 +921,6 @@
         var imgData = canvas.toDataURL('image/png');
         container.classList.add('hidden');
 
-        // Buka gambar / Picu Intent Cetak
         var win = window.open();
         if (win) {
           win.document.write('<img src="' + imgData + '" style="width:100%; max-width:280px;" onload="window.print();window.close();"/>');
@@ -1089,7 +1088,6 @@
         return matchesCat && matchesSearch;
       });
 
-      // Sort by Sequence Number (1, 2, 3...)
       filtered.sort(function(a, b) { return (a.seq || 999) - (b.seq || 999); });
 
       grid.innerHTML = filtered.map(function(item) {
@@ -1317,7 +1315,6 @@
 
       db.ref('transactions/' + trxCode).set(transactionData, async function(err) {
         if (!err) {
-          // Send Direct Bluetooth ESC/POS if Connected
           if (btKasirCharacteristic) {
             var kasirBuf = buildESCPOSBuffer(transactionData, false);
             await sendESCPOSToPrinter(btKasirCharacteristic, kasirBuf);
@@ -1327,7 +1324,6 @@
             await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
           }
 
-          // Trigger Auto-Image Print (Bypass PDF Blank & iWare Manual)
           renderAndPrintReceiptImage(transactionData);
 
           cart = [];
@@ -1450,7 +1446,6 @@
 
       if (!code || !name || price <= 0) return alert("Lengkapi data menu!");
 
-      // Sequence Duplicate Warning Check
       var duplicate = menuItems.find(function(m) {
         return m.cat === cat && m.seq === seq && m.id !== id;
       });
@@ -1651,7 +1646,6 @@
       var tbody = document.getElementById('kitchen-history-tbody');
       var today = shiftInfo.date;
 
-      // Chronological FIFO Order
       var activeOrders = transactions.filter(function(t) { 
         return t.date === today && t.status !== 'CANCELLED'; 
       }).sort(function(a, b) { 
@@ -1700,4 +1694,117 @@
       }
 
       tbody.innerHTML = activeOrders.map(function(t) {
-        var itemsStr = t.items.map(function(i) { return i.name + ' (x' + i.qty
+        var itemsStr = t.items.map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
+        return `
+          <tr>
+            <td class="p-2.5">${t.time}</td>
+            <td class="p-2.5 font-bold">${t.code}</td>
+            <td class="p-2.5 font-bold text-brand-600">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
+            <td class="p-2.5">${itemsStr} ${t.note ? '<strong class="text-yellow-600 font-bold block">[Catatan: ' + t.note + ']</strong>' : ''}</td>
+            <td class="p-2.5 font-bold ${t.kitchenStatus === 'SELESAI' ? 'text-emerald-500' : 'text-yellow-500'}">${t.kitchenStatus || 'PROSES'}</td>
+            <td class="p-2.5 text-center">
+              <button onclick="reprintReceipt('${t.code}')" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-print"></i> Tiket Dapur</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function toggleKitchenStatus(code, status) {
+      db.ref('transactions/' + code).update({ kitchenStatus: status });
+    }
+
+    function toggleVoiceSound() {
+      voiceEnabled = !voiceEnabled;
+      var btn = document.getElementById('btn-toggle-voice');
+      btn.innerHTML = voiceEnabled ? '<i class="fa-solid fa-volume-high"></i> Suara: ON' : '<i class="fa-solid fa-volume-xmark"></i> Suara: OFF';
+    }
+
+    function playVoiceNotification() {
+      if ('speechSynthesis' in window) {
+        var msg = new SpeechSynthesisUtterance("Pesanan Masuk!");
+        msg.lang = 'id-ID';
+        window.speechSynthesis.speak(msg);
+      }
+    }
+
+    // --- UTILS & EXPORT ---
+    function exportToExcel() {
+      var start = document.getElementById('filter-start-date').value;
+      var end = document.getElementById('filter-end-date').value;
+      var filtered = transactions.filter(function(t) { return !start || !end || (t.date >= start && t.date <= end); });
+      if (filtered.length === 0) return alert("Tidak ada data transaksi!");
+
+      var excelRows = [];
+      filtered.forEach(function(t) {
+        t.items.forEach(function(item) {
+          excelRows.push({
+            "Tanggal": t.date, "Waktu": t.time, "Kode Transaksi": t.code, "Kasir": t.kasir,
+            "Tipe": t.orderType, "Meja": t.table || '-', "Nama Menu": item.name, "Catatan Item": item.itemNote || '-',
+            "Harga": item.price, "Qty": item.qty, "Subtotal": item.price * item.qty,
+            "Metode": t.paymentMethod, "Catatan Global": t.note || '-', "Status": t.status
+          });
+        });
+      });
+
+      var worksheet = XLSX.utils.json_to_sheet(excelRows);
+      var workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sales");
+      XLSX.writeFile(workbook, "Laporan_RajaRasa_" + start + "_smd_" + end + ".xlsx");
+    }
+
+    function exportMenuListToExcel() {
+      var menuRows = menuItems.map(function(m) {
+        return { "No Urut": m.seq || 1, "Kode Menu": m.code, "Nama Menu": m.name, "Kamar/Kategori": m.cat, "Harga (Rp)": m.price };
+      });
+      var worksheet = XLSX.utils.json_to_sheet(menuRows);
+      var workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Master Menu");
+      XLSX.writeFile(workbook, "Master_Menu_RajaRasa.xlsx");
+    }
+
+    function resetSystemDataPrompt() {
+      var pin = prompt("Masukkan PIN Rahasia Manager untuk RESET:");
+      if (pin === '1240') {
+        if (confirm("PERINGATAN: Seluruh data transaksi akan dihapus permanen!")) {
+          db.ref('transactions').remove();
+        }
+      } else if (pin !== null) {
+        alert("PIN Salah!");
+      }
+    }
+
+    function setOrderType(type) {
+      orderType = type;
+      var btnDine = document.getElementById('btn-type-dinein');
+      var btnTake = document.getElementById('btn-type-takeaway');
+      var boxTable = document.getElementById('table-select-box');
+
+      if (type === 'DINE_IN') {
+        btnDine.className = "px-3 py-1 text-xs font-bold rounded-lg border border-brand-500 bg-brand-500 text-white transition shadow";
+        btnTake.className = "px-3 py-1 text-xs font-bold rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 transition";
+        boxTable.classList.remove('hidden');
+      } else {
+        btnTake.className = "px-3 py-1 text-xs font-bold rounded-lg border border-brand-500 bg-brand-500 text-white transition shadow";
+        btnDine.className = "px-3 py-1 text-xs font-bold rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 transition";
+        boxTable.classList.add('hidden');
+      }
+    }
+
+    function formatRupiah(num) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+    }
+
+    function formatRupiahInput(input) {
+      var value = input.value.replace(/[^0-9]/g, '');
+      input.value = value ? "Rp " + new Intl.NumberFormat('id-ID').format(parseInt(value)) : '';
+    }
+
+    function formatDateIndo(dateStr) {
+      if (!dateStr) return '';
+      var parts = dateStr.split('-');
+      return parts[2] + '/' + parts[1] + '/' + parts[0];
+    }
+  </script>
+</body>
+</html>
