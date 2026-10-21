@@ -907,7 +907,7 @@
       buffer.push(0x1B, 0x61, 0x01); // Align Center
 
       if (!isKitchen) {
-        addStr("👑 RAJA RASA 👑\nCOFFEE & RESTO\nJl. Setia Budi No. 152A, PKU\nTelp: 0823-8697-9900\n");
+        addStr("RAJA RASA\nCOFFEE & RESTO\nJl. Setia Budi No. 152A, PKU\nTelp: 0823-8697-9900\n");
       } else {
         addStr(isAdditionalTicket ? "*** TIKET TAMBAHAN DAPUR ***\n" : "--- TIKET DAPUR / KITCHEN ---\n");
       }
@@ -1285,13 +1285,16 @@
       var noteStr = document.getElementById('order-note-input')?.value.trim() || '';
 
       var existingBill = openBills[tableNum];
-      var additionalItems = [];
-      var isAdditional = false;
+      var newTicket = null;
 
-      if (existingBill && existingBill.items) {
-        isAdditional = true;
+      if (existingBill) {
+        // OPEN BILL SUDAH ADA (TAMBAHAN PESANAN)
+        // Hitung item tambahan yang belum ada di tiket sebelumnya
+        var existingItems = existingBill.items || [];
+        var additionalItems = [];
+
         cart.forEach(function(newItem) {
-          var oldItem = existingBill.items.find(function(o) { return o.id === newItem.id; });
+          var oldItem = existingItems.find(function(o) { return o.id === newItem.id; });
           var oldQty = oldItem ? oldItem.qty : 0;
           var diffQty = newItem.qty - oldQty;
           if (diffQty > 0) {
@@ -1301,39 +1304,103 @@
             });
           }
         });
-      }
 
-      var billData = {
-        table: tableNum,
-        orderType: orderType,
-        items: cart,
-        additionalItems: additionalItems,
-        isAdditional: isAdditional,
-        total: totalPrice,
-        totalQty: totalQty,
-        note: noteStr,
-        kasir: shiftInfo.kasirName,
-        date: shiftInfo.date,
-        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        kitchenStatus: 'PROSES'
-      };
+        var existingTickets = existingBill.tickets || [];
+        var ticketIndex = existingTickets.length + 1;
 
-      // Direct Sync ke Firebase /open_bills & Otomatis Terbaca di KDS
-      db.ref('open_bills/' + tableNum).set(billData, async function(err) {
-        if (!err) {
-          if (btKitchenCharacteristic) {
-            var kitchenBuf = buildESCPOSBuffer(billData, true, isAdditional);
-            await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
-          }
-
-          alert("Open Bill " + tableNum + " berhasil disimpan & terkirim ke KDS Dapur!");
-          cart = [];
-          activeEditingTable = null;
-          resetCartUIState();
-          renderCart();
+        if (additionalItems.length > 0) {
+          newTicket = {
+            ticketId: 'TKT_' + Date.now(),
+            ticketNum: ticketIndex,
+            isAdditional: true,
+            items: additionalItems,
+            time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+            kitchenStatus: 'PROSES',
+            note: noteStr
+          };
+          existingTickets.push(newTicket);
         }
-      });
+
+        var billData = {
+          table: tableNum,
+          orderType: orderType,
+          items: cart, // Total akumulasi pesanan untuk kasir
+          tickets: existingTickets, // Daftar tiket per penambahan untuk KDS
+          total: totalPrice,
+          totalQty: totalQty,
+          note: noteStr,
+          kasir: shiftInfo.kasirName,
+          date: shiftInfo.date,
+          time: existingBill.time || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+          timestamp: existingBill.timestamp || firebase.database.ServerValue.TIMESTAMP
+        };
+
+        db.ref('open_bills/' + tableNum).set(billData, async function(err) {
+          if (!err) {
+            if (newTicket && btKitchenCharacteristic) {
+              var printData = {
+                table: tableNum,
+                orderType: orderType,
+                items: newTicket.items,
+                additionalItems: newTicket.items,
+                kasir: shiftInfo.kasirName,
+                date: shiftInfo.date,
+                time: newTicket.time,
+                note: newTicket.note
+              };
+              var kitchenBuf = buildESCPOSBuffer(printData, true, true);
+              await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
+            }
+
+            alert("Pesanan Tambahan " + tableNum + " berhasil disimpan & dikirim sebagai NOTA BARU ke Dapur!");
+            cart = [];
+            activeEditingTable = null;
+            resetCartUIState();
+            renderCart();
+          }
+        });
+
+      } else {
+        // OPEN BILL BARU (PERTIAMA KALI)
+        var initialTicket = {
+          ticketId: 'TKT_' + Date.now(),
+          ticketNum: 1,
+          isAdditional: false,
+          items: cart,
+          time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+          kitchenStatus: 'PROSES',
+          note: noteStr
+        };
+
+        var billData = {
+          table: tableNum,
+          orderType: orderType,
+          items: cart,
+          tickets: [initialTicket],
+          total: totalPrice,
+          totalQty: totalQty,
+          note: noteStr,
+          kasir: shiftInfo.kasirName,
+          date: shiftInfo.date,
+          time: initialTicket.time,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        db.ref('open_bills/' + tableNum).set(billData, async function(err) {
+          if (!err) {
+            if (btKitchenCharacteristic) {
+              var kitchenBuf = buildESCPOSBuffer(billData, true, false);
+              await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
+            }
+
+            alert("Open Bill " + tableNum + " berhasil disimpan & terkirim ke KDS Dapur!");
+            cart = [];
+            activeEditingTable = null;
+            resetCartUIState();
+            renderCart();
+          }
+        });
+      }
     }
 
     function loadOpenBill(tableKey) {
@@ -1576,7 +1643,7 @@
         cashGiven: given,
         cashChange: change,
         status: 'SUCCESS',
-        kitchenStatus: 'PROSES'
+        kitchenStatus: 'SELESAI'
       };
 
       // Jika sedang edit open bill, hapus open bill tersebut dari Firebase karena sudah dibayar lunas
@@ -1967,17 +2034,80 @@
       var tbody = document.getElementById('kitchen-history-tbody');
       var targetDate = kitchenSelectedDate || shiftInfo.date;
 
-      // Ambil transaksi LUNAS dan OPEN BILLS aktif sesuai tanggal KDS yang dipilih
+      // Ambil transaksi LUNAS
       var completedOrders = transactions.filter(function(t) { 
         return t.date === targetDate && t.status !== 'CANCELLED'; 
+      }).map(function(t) {
+        return {
+          key: t.code,
+          code: t.code,
+          table: t.table,
+          orderType: t.orderType,
+          kasir: t.kasir,
+          date: t.date,
+          time: t.time,
+          timestamp: t.timestamp || 0,
+          items: t.items || [],
+          note: t.note || '',
+          kitchenStatus: t.kitchenStatus || 'PROSES',
+          isOpenBill: false,
+          isAdditional: false,
+          ticketNum: null
+        };
       });
 
-      var openBillList = Object.values(openBills).filter(function(b) {
-        return b.date === targetDate;
+      // Ambil seluruh TIKET dari OPEN BILLS aktif secara terpisah
+      var openBillTickets = [];
+      Object.values(openBills).forEach(function(bill) {
+        if (bill.date === targetDate) {
+          var tickets = bill.tickets;
+          if (tickets && Array.isArray(tickets) && tickets.length > 0) {
+            tickets.forEach(function(t) {
+              openBillTickets.push({
+                key: bill.table + '_' + t.ticketId,
+                tableKey: bill.table,
+                ticketId: t.ticketId,
+                code: null,
+                table: bill.table,
+                orderType: bill.orderType,
+                kasir: bill.kasir,
+                date: bill.date,
+                time: t.time || bill.time,
+                timestamp: bill.timestamp || 0,
+                items: t.items || [],
+                note: t.note || bill.note || '',
+                kitchenStatus: t.kitchenStatus || 'PROSES',
+                isOpenBill: true,
+                isAdditional: t.isAdditional || false,
+                ticketNum: t.ticketNum || 1
+              });
+            });
+          } else {
+            // Fallback format lama jika belum ada tickets
+            openBillTickets.push({
+              key: bill.table,
+              tableKey: bill.table,
+              ticketId: 'main',
+              code: null,
+              table: bill.table,
+              orderType: bill.orderType,
+              kasir: bill.kasir,
+              date: bill.date,
+              time: bill.time,
+              timestamp: bill.timestamp || 0,
+              items: bill.items || [],
+              note: bill.note || '',
+              kitchenStatus: bill.kitchenStatus || 'PROSES',
+              isOpenBill: true,
+              isAdditional: false,
+              ticketNum: 1
+            });
+          }
+        }
       });
 
-      // Gabungkan seluruh pesanan aktif untuk KDS
-      var activeOrders = completedOrders.concat(openBillList).sort(function(a, b) { 
+      // Gabungkan seluruh tiket aktif untuk KDS (Dukungan FIFO)
+      var activeOrders = completedOrders.concat(openBillTickets).sort(function(a, b) { 
         return (a.timestamp || 0) - (b.timestamp || 0); 
       });
 
@@ -1987,23 +2117,20 @@
         grid.innerHTML = activeOrders.map(function(t) {
           var isDineIn = t.orderType === 'DINE_IN';
           var tableText = isDineIn ? t.table : 'TAKE AWAY';
-          var isOpenBill = !t.code; // Jika tidak ada kode TRX, berarti Open Bill aktif
 
-          var targetItems = (t.isAdditional && t.additionalItems && t.additionalItems.length > 0) ? t.additionalItems : (t.items || []);
-
-          var itemsList = targetItems.map(function(i) {
+          var itemsList = (t.items || []).map(function(i) {
             return `<li class="flex justify-between border-b border-gray-50 dark:border-gray-700/30 pb-1"><span>${i.name} ${i.itemNote ? '<span class="text-orange-500 font-bold">[' + i.itemNote + ']</span>' : ''}</span><span class="text-brand-600 font-extrabold text-sm ml-2">x${i.qty}</span></li>`;
           }).join('');
 
           return `
-            <div class="bg-white dark:bg-gray-800 border-2 ${isOpenBill ? 'border-amber-500 bg-amber-50/20' : (t.kitchenStatus === 'SELESAI' ? 'border-emerald-500/50' : 'border-yellow-500')} rounded-2xl p-4 shadow-md flex flex-col justify-between">
+            <div class="bg-white dark:bg-gray-800 border-2 ${t.isOpenBill ? (t.isAdditional ? 'border-red-500 bg-red-50/20' : 'border-amber-500 bg-amber-50/20') : (t.kitchenStatus === 'SELESAI' ? 'border-emerald-500/50' : 'border-yellow-500')} rounded-2xl p-4 shadow-md flex flex-col justify-between">
               <div>
                 <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
                   <div>
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex items-center gap-1.5 flex-wrap">
                       <span class="font-bold text-sm text-brand-600 block">${t.code || t.table}</span>
-                      ${isOpenBill ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-500 text-white animate-pulse">OPEN BILL</span>' : ''}
-                      ${t.isAdditional ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-red-600 text-white animate-bounce">🚨 TAMBAHAN</span>' : ''}
+                      ${t.isOpenBill ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-500 text-white animate-pulse">OPEN BILL</span>' : ''}
+                      ${t.isAdditional ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-red-600 text-white animate-bounce">TAMBAHAN PESANAN #' + t.ticketNum + '</span>' : ''}
                     </div>
                     <span class="text-xs font-black px-2 py-0.5 rounded-md ${isDineIn ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">
                       <i class="fa-solid ${isDineIn ? 'fa-chair' : 'fa-bag-shopping'} mr-1"></i> ${tableText}
@@ -2020,10 +2147,10 @@
               </div>
 
               <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
-                <button onclick="toggleKitchenStatus('${t.code || t.table}', '${t.kitchenStatus === 'SELESAI' ? 'PROSES' : 'SELESAI'}', ${isOpenBill})" class="w-full py-2 rounded-xl font-bold text-xs shadow transition ${t.kitchenStatus === 'SELESAI' ? 'bg-emerald-600 text-white' : 'bg-yellow-500 text-gray-900'}">
-                  Status: ${t.kitchenStatus === 'SELESAI' ? '🟢 SELESAI' : '🟡 PROSES...'}
+                <button onclick="toggleKitchenTicketStatus('${t.isOpenBill ? t.tableKey : t.code}', '${t.ticketId || 'main'}', '${t.kitchenStatus === 'SELESAI' ? 'PROSES' : 'SELESAI'}', ${t.isOpenBill})" class="w-full py-2 rounded-xl font-bold text-xs shadow transition ${t.kitchenStatus === 'SELESAI' ? 'bg-emerald-600 text-white' : 'bg-yellow-500 text-gray-900'}">
+                  Status: ${t.kitchenStatus === 'SELESAI' ? 'SELESAI' : 'PROSES...'}
                 </button>
-                <button onclick="printKitchenReceipt('${t.code || t.table}', ${isOpenBill})" class="w-full py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
+                <button onclick="printKitchenTicketDirect('${t.isOpenBill ? t.tableKey : t.code}', '${t.ticketId || 'main'}', ${t.isOpenBill})" class="w-full py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
                   <i class="fa-solid fa-print"></i> Cetak Tiket Dapur
                 </button>
               </div>
@@ -2033,43 +2160,77 @@
       }
 
       tbody.innerHTML = activeOrders.map(function(t) {
-        var isOpenBill = !t.code;
-        var targetItems = (t.isAdditional && t.additionalItems && t.additionalItems.length > 0) ? t.additionalItems : (t.items || []);
-        var itemsStr = targetItems.map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
+        var itemsStr = (t.items || []).map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
         return `
           <tr>
             <td class="p-2.5">${t.time}</td>
-            <td class="p-2.5 font-bold">${t.code || (t.table + ' [OPEN BILL]')}</td>
+            <td class="p-2.5 font-bold">${t.code || (t.table + (t.isAdditional ? ' [TAMBAHAN #' + t.ticketNum + ']' : ' [OPEN BILL]'))}</td>
             <td class="p-2.5 font-bold text-brand-600">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
             <td class="p-2.5">${itemsStr} ${t.note ? '<strong class="text-yellow-600 font-bold block">[Catatan: ' + t.note + ']</strong>' : ''}</td>
             <td class="p-2.5 font-bold ${t.kitchenStatus === 'SELESAI' ? 'text-emerald-500' : 'text-yellow-500'}">${t.kitchenStatus || 'PROSES'}</td>
             <td class="p-2.5 text-center">
-              <button onclick="printKitchenReceipt('${t.code || t.table}', ${isOpenBill})" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-print"></i> Tiket Dapur</button>
+              <button onclick="printKitchenTicketDirect('${t.isOpenBill ? t.tableKey : t.code}', '${t.ticketId || 'main'}', ${t.isOpenBill})" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-print"></i> Tiket Dapur</button>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    function toggleKitchenStatus(key, status, isOpenBill) {
+    function toggleKitchenTicketStatus(mainKey, ticketId, status, isOpenBill) {
       if (isOpenBill) {
-        db.ref('open_bills/' + key).update({ kitchenStatus: status });
+        db.ref('open_bills/' + mainKey).once('value', function(snapshot) {
+          var bill = snapshot.val();
+          if (bill && bill.tickets) {
+            var updatedTickets = bill.tickets.map(function(t) {
+              if (t.ticketId === ticketId || ticketId === 'main') {
+                t.kitchenStatus = status;
+              }
+              return t;
+            });
+            db.ref('open_bills/' + mainKey + '/tickets').set(updatedTickets);
+          } else {
+            db.ref('open_bills/' + mainKey).update({ kitchenStatus: status });
+          }
+        });
       } else {
-        db.ref('transactions/' + key).update({ kitchenStatus: status });
+        db.ref('transactions/' + mainKey).update({ kitchenStatus: status });
       }
     }
 
-    async function printKitchenReceipt(key, isOpenBill) {
-      var trx = isOpenBill ? openBills[key] : transactions.find(function(t) { return t.code === key; });
-      if (!trx) return;
+    async function printKitchenTicketDirect(mainKey, ticketId, isOpenBill) {
+      if (isOpenBill) {
+        var bill = openBills[mainKey];
+        if (!bill) return;
 
-      var isAdd = trx.isAdditional || false;
+        var targetTicket = (bill.tickets || []).find(function(t) { return t.ticketId === ticketId; });
+        var printData = {
+          table: bill.table,
+          orderType: bill.orderType,
+          items: targetTicket ? targetTicket.items : bill.items,
+          additionalItems: targetTicket ? targetTicket.items : bill.items,
+          kasir: bill.kasir,
+          date: bill.date,
+          time: targetTicket ? targetTicket.time : bill.time,
+          note: targetTicket ? targetTicket.note : bill.note
+        };
 
-      if (btKitchenCharacteristic) {
-        var kitchenBuf = buildESCPOSBuffer(trx, true, isAdd);
-        await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
+        var isAdd = targetTicket ? targetTicket.isAdditional : false;
+
+        if (btKitchenCharacteristic) {
+          var kitchenBuf = buildESCPOSBuffer(printData, true, isAdd);
+          await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
+        }
+        renderAndPrintReceiptImage(printData, true, isAdd);
+      } else {
+        var trx = transactions.find(function(t) { return t.code === mainKey; });
+        if (!trx) return;
+
+        if (btKitchenCharacteristic) {
+          var kitchenBuf = buildESCPOSBuffer(trx, true, false);
+          await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
+        }
+        renderAndPrintReceiptImage(trx, true, false);
       }
-      renderAndPrintReceiptImage(trx, true, isAdd);
     }
 
     function toggleVoiceSound() {
