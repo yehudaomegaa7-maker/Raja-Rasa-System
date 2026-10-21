@@ -862,19 +862,24 @@
       return buffer;
     }
 
-    // --- AUTO CONVERT TO IMAGE (BYPASS PDF BLANK) ---
+    // --- AUTO CONVERT TO IMAGE (FIXED STABLE HTML2CANVAS RENDERING) ---
     function renderAndPrintReceiptImage(trx) {
       var container = document.getElementById('printable-area');
-      container.classList.remove('hidden');
-
+      
       var itemsHTML = trx.items.map(function(i) {
         return `<tr><td colspan="2" style="font-weight:bold; padding-top:4px;">${i.name}</td></tr>` +
                `<tr><td>${i.qty} x ${formatRupiah(i.price)}</td><td style="text-align:right;">${formatRupiah(i.price * i.qty)}</td></tr>` +
                (i.itemNote ? `<tr><td colspan="2" style="font-size:9px; font-style:italic;">* Note: ${i.itemNote}</td></tr>` : '');
       }).join('');
 
+      // Temp Render Element
+      container.style.display = 'block';
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0px';
+
       container.innerHTML = `
-        <div id="receipt-image-card" style="background:#fff; color:#000; padding:12px; font-family:'Courier New', monospace; font-size:11px; width:250px; margin:0 auto; text-align:left;">
+        <div id="receipt-image-card" style="background:#fff; color:#000; padding:12px; font-family:'Courier New', monospace; font-size:11px; width:260px; margin:0 auto; text-align:left; border:1px solid #ccc;">
           <div style="text-align:center; font-weight:bold;">
             <div style="font-size:16px;">👑 RAJA RASA 👑</div>
             <div style="font-size:12px;">COFFEE & RESTO</div>
@@ -900,7 +905,7 @@
           </div>
           <div style="display:flex; justify-content:space-between; font-size:9px;">
             <span>Metode:</span>
-            <style type="text-transform:uppercase;">${trx.paymentMethod}</style>
+            <span style="text-transform:uppercase;">${trx.paymentMethod}</span>
           </div>
           <div style="display:flex; justify-content:space-between; font-size:9px;">
             <span>Bayar:</span>
@@ -917,17 +922,38 @@
         </div>
       `;
 
-      html2canvas(document.getElementById('receipt-image-card'), { scale: 2 }).then(function(canvas) {
-        var imgData = canvas.toDataURL('image/png');
-        container.classList.add('hidden');
+      var cardElem = document.getElementById('receipt-image-card');
 
-        var win = window.open();
-        if (win) {
-          win.document.write('<img src="' + imgData + '" style="width:100%; max-width:280px;" onload="window.print();window.close();"/>');
-        } else {
+      setTimeout(function() {
+        html2canvas(cardElem, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false
+        }).then(function(canvas) {
+          var imgData = canvas.toDataURL('image/png');
+          container.style.display = 'none';
+
+          var printWin = window.open('', '_blank');
+          if (printWin) {
+            printWin.document.write(`
+              <html>
+                <head><title>Print Struk - ${trx.code}</title></head>
+                <body style="margin:0; padding:0; display:flex; justify-content:center; align-items:flex-start;">
+                  <img src="${imgData}" style="width:100%; max-width:280px;" onload="window.print(); window.close();" />
+                </body>
+              </html>
+            `);
+            printWin.document.close();
+          } else {
+            window.print();
+          }
+        }).catch(function(err) {
+          console.error("HTML2Canvas Error:", err);
+          container.style.display = 'none';
           window.print();
-        }
-      });
+        });
+      }, 100);
     }
 
     // --- ROOM & AUTH PIN ---
