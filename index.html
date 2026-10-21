@@ -1289,7 +1289,6 @@
 
       if (existingBill) {
         // OPEN BILL SUDAH ADA (TAMBAHAN PESANAN)
-        // Hitung item tambahan yang belum ada di tiket sebelumnya
         var existingItems = existingBill.items || [];
         var additionalItems = [];
 
@@ -1306,6 +1305,19 @@
         });
 
         var existingTickets = existingBill.tickets || [];
+        // Jika tiket pertama berupa format lama tanpa array tickets
+        if (existingTickets.length === 0 && existingBill.items) {
+          existingTickets.push({
+            ticketId: 'TKT_1',
+            ticketNum: 1,
+            isAdditional: false,
+            items: existingBill.items,
+            time: existingBill.time || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+            kitchenStatus: existingBill.kitchenStatus || 'PROSES',
+            note: existingBill.note || ''
+          });
+        }
+
         var ticketIndex = existingTickets.length + 1;
 
         if (additionalItems.length > 0) {
@@ -1325,7 +1337,7 @@
           table: tableNum,
           orderType: orderType,
           items: cart, // Total akumulasi pesanan untuk kasir
-          tickets: existingTickets, // Daftar tiket per penambahan untuk KDS
+          tickets: existingTickets, // Daftar tiket terpisah per pesanan untuk KDS
           total: totalPrice,
           totalQty: totalQty,
           note: noteStr,
@@ -1352,7 +1364,7 @@
               await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
             }
 
-            alert("Pesanan Tambahan " + tableNum + " berhasil disimpan & dikirim sebagai NOTA BARU ke Dapur!");
+            alert("Pesanan Tambahan " + tableNum + " berhasil disimpan & dikirim sebagai CARD BARU ke Dapur!");
             cart = [];
             activeEditingTable = null;
             resetCartUIState();
@@ -1361,7 +1373,7 @@
         });
 
       } else {
-        // OPEN BILL BARU (PERTIAMA KALI)
+        // OPEN BILL BARU (PERTAMA KALI)
         var initialTicket = {
           ticketId: 'TKT_' + Date.now(),
           ticketNum: 1,
@@ -2028,7 +2040,7 @@
       }).join('');
     }
 
-    // --- KITCHEN FIFO DISPLAY (REALTIME OPEN BILL & DUAL TANGGAL SYNC) ---
+    // --- KITCHEN FIFO DISPLAY (PEMISAHAN CARD TAMBAHAN MENU & CAP DEDICATED) ---
     function renderKitchenDisplay() {
       var grid = document.getElementById('kitchen-orders-grid');
       var tbody = document.getElementById('kitchen-history-tbody');
@@ -2056,7 +2068,7 @@
         };
       });
 
-      // Ambil seluruh TIKET dari OPEN BILLS aktif secara terpisah
+      // Ambil seluruh TIKET dari OPEN BILLS aktif secara terpisah (Memisah Card Per Tiket)
       var openBillTickets = [];
       Object.values(openBills).forEach(function(bill) {
         if (bill.date === targetDate) {
@@ -2123,14 +2135,20 @@
           }).join('');
 
           return `
-            <div class="bg-white dark:bg-gray-800 border-2 ${t.isOpenBill ? (t.isAdditional ? 'border-red-500 bg-red-50/20' : 'border-amber-500 bg-amber-50/20') : (t.kitchenStatus === 'SELESAI' ? 'border-emerald-500/50' : 'border-yellow-500')} rounded-2xl p-4 shadow-md flex flex-col justify-between">
+            <div class="bg-white dark:bg-gray-800 border-2 ${t.isAdditional ? 'border-red-500 bg-red-50/20 dark:bg-red-950/20' : (t.isOpenBill ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20' : (t.kitchenStatus === 'SELESAI' ? 'border-emerald-500/50' : 'border-yellow-500'))} rounded-2xl p-4 shadow-md flex flex-col justify-between">
               <div>
+                <!-- BANNER CAP KHUSUS MENU TAMBAHAN -->
+                ${t.isAdditional ? `
+                  <div class="mb-2 bg-red-600 text-white font-black text-center py-1 px-3 rounded-xl text-xs shadow tracking-wide animate-pulse flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-circle-plus text-sm"></i> MENU TAMBAHAN #${t.ticketNum}
+                  </div>
+                ` : ''}
+
                 <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
                   <div>
                     <div class="flex items-center gap-1.5 flex-wrap">
                       <span class="font-bold text-sm text-brand-600 block">${t.code || t.table}</span>
-                      ${t.isOpenBill ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-500 text-white animate-pulse">OPEN BILL</span>' : ''}
-                      ${t.isAdditional ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-red-600 text-white animate-bounce">TAMBAHAN PESANAN #' + t.ticketNum + '</span>' : ''}
+                      ${t.isOpenBill && !t.isAdditional ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-500 text-white animate-pulse">OPEN BILL</span>' : ''}
                     </div>
                     <span class="text-xs font-black px-2 py-0.5 rounded-md ${isDineIn ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">
                       <i class="fa-solid ${isDineIn ? 'fa-chair' : 'fa-bag-shopping'} mr-1"></i> ${tableText}
