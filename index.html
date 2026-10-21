@@ -67,8 +67,8 @@
   <!-- TOP BAR / HEADER -->
   <header id="main-header" class="hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex flex-wrap items-center justify-between sticky top-0 z-40 shadow-sm">
     <div class="flex items-center space-x-3">
-      <div class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center font-bold text-white text-xl shadow-md">
-        👑
+      <div class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center overflow-hidden font-bold text-white text-xl shadow-md">
+        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=" id="header-logo-img" alt="Logo" class="w-full h-full object-cover">
       </div>
       <div>
         <h1 class="font-bold text-lg text-brand-600 dark:text-brand-500 leading-tight">Raja Rasa</h1>
@@ -109,8 +109,8 @@
     <!-- ==================== LANDING / LOCK SCREEN ==================== -->
     <div id="screen-landing" class="min-h-[80vh] flex flex-col items-center justify-center py-10 space-y-8">
       <div class="text-center space-y-3">
-        <div class="w-20 h-20 rounded-full bg-brand-500 text-white flex items-center justify-center text-4xl mx-auto shadow-xl ring-4 ring-brand-300 dark:ring-brand-900/50">
-          👑
+        <div class="w-24 h-24 rounded-full bg-brand-500 text-white flex items-center justify-center text-4xl mx-auto shadow-xl ring-4 ring-brand-300 dark:ring-brand-900/50 overflow-hidden">
+          <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=" alt="Logo Raja Rasa" class="w-full h-full object-cover">
         </div>
         <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Raja Rasa COFFEE & RESTO</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">Jl. Setia Budi No. 152A, PKU (Pekanbaru)</p>
@@ -122,7 +122,7 @@
             <i class="fa-solid fa-cash-register"></i>
           </div>
           <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Ruang Kasir</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400">POS, Penjualan, Shift & Cetak Struk</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">POS, Penjualan, Open Bill & Cetak Struk</p>
         </div>
 
         <div onclick="promptRoomPIN('manager')" class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-brand-500 rounded-2xl p-6 text-center cursor-pointer transition shadow-lg group">
@@ -166,6 +166,21 @@
         </div>
       </div>
 
+      <!-- OPEN BILLS TABS BAR -->
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-2xl shadow-sm flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 max-w-full" id="open-bills-bar">
+          <!-- Dynamic Meja Gantung Tabs -->
+        </div>
+        <div id="active-bill-indicator" class="hidden flex items-center gap-2">
+          <span class="text-xs px-3 py-1 rounded-lg bg-amber-100 text-amber-800 font-bold border border-amber-300 animate-pulse">
+            <i class="fa-solid fa-pen-to-square"></i> Mode Edit: <span id="lbl-editing-table">Meja 1</span>
+          </span>
+          <button onclick="cancelOpenBillEditMode()" class="text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-800 dark:text-white font-bold px-3 py-1.5 rounded-lg shadow">
+            Kembali ke Trx Baru
+          </button>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- LEFT: MENU CATALOG -->
         <div class="lg:col-span-7 xl:col-span-8 space-y-3">
@@ -180,11 +195,11 @@
         </div>
 
         <!-- RIGHT: CART & PAYMENTS -->
-        <div class="lg:col-span-5 xl:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col justify-between shadow-lg min-h-[550px]">
+        <div id="cart-card-container" class="lg:col-span-5 xl:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col justify-between shadow-lg min-h-[550px] transition-colors">
           <div>
             <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3 mb-3">
-              <h2 class="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 text-sm">
-                <i class="fa-solid fa-cart-shopping text-brand-500"></i> Keranjang Pesanan
+              <h2 id="cart-header-title" class="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 text-sm">
+                <i class="fa-solid fa-cart-shopping text-brand-500"></i> Keranjang Pesanan Baru
               </h2>
               <button onclick="clearCart()" class="text-xs text-red-500 hover:text-red-400 flex items-center gap-1">
                 <i class="fa-solid fa-trash-can"></i> Kosongkan
@@ -245,7 +260,7 @@
             </div>
 
             <!-- Payment Methods -->
-            <div>
+            <div id="payment-section-box">
               <label class="block text-[10px] font-semibold text-gray-500 mb-1">Metode Pembayaran:</label>
               <div class="grid grid-cols-3 gap-1.5" id="payment-buttons-grid">
                 <button type="button" onclick="selectPaymentMethod('cash')" id="pay-btn-cash" class="pay-method-btn py-1.5 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-center transition-all">
@@ -262,9 +277,14 @@
 
             <div id="payment-input-area" class="space-y-1 pt-0.5 min-h-[60px]"></div>
 
-            <button onclick="processCheckout()" id="btn-process-checkout" disabled class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold rounded-xl shadow-lg transition text-xs md:text-sm flex items-center justify-center gap-2">
-              <i class="fa-solid fa-check-circle"></i> Selesaikan & Print Gambar Auto
-            </button>
+            <div id="action-buttons-box" class="grid grid-cols-2 gap-2">
+              <button onclick="saveOpenBill()" id="btn-save-openbill" class="py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow transition text-xs flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-bookmark"></i> Simpan Open Bill
+              </button>
+              <button onclick="processCheckout()" id="btn-process-checkout" disabled class="py-2.5 bg-brand-600 hover:bg-brand-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold rounded-xl shadow-lg transition text-xs flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-check-circle"></i> Bayar & Print
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -384,17 +404,20 @@
           <div class="flex flex-wrap items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3 gap-2">
             <div>
               <h3 class="font-bold text-gray-800 dark:text-gray-200 text-sm"><i class="fa-solid fa-door-open text-brand-500"></i> Kelola Kamar Menu (Kategori) & Urutan</h3>
-              <p class="text-xs text-gray-400">Pilih Kamar/Kategori untuk mengedit menu didalamnya. Urutan 1 akan tampil paling kiri atas di Kasir.</p>
+              <p class="text-xs text-gray-400">Pilih Kamar/Kategori untuk mengedit menu didalamnya. Hapus kategori otomatis dicek dari menu aktif.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="exportMenuListToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow">
                 <i class="fa-solid fa-file-excel"></i> Export Menu (XLS)
               </button>
               <button onclick="promptAddNewCategory()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow">
-                <i class="fa-solid fa-folder-plus"></i> + Tambah Kamar Baru
+                <i class="fa-solid fa-folder-plus"></i> + Tambah Kamar
+              </button>
+              <button onclick="promptDeleteCategory()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow">
+                <i class="fa-solid fa-folder-minus"></i> - Hapus Kamar
               </button>
               <button onclick="openMenuModal('add')" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow">
-                <i class="fa-solid fa-plus"></i> Tambah Menu Baru
+                <i class="fa-solid fa-plus"></i> + Menu Baru
               </button>
             </div>
           </div>
@@ -476,7 +499,7 @@
           <h2 class="font-bold text-lg text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
             <i class="fa-solid fa-kitchen-set"></i> Kitchen Display System (KDS)
           </h2>
-          <p class="text-xs text-gray-500">Layar Pantau Dapur Real-time (Urutan FIFO Kronologis)</p>
+          <p class="text-xs text-gray-500">Layar Pantau Dapur Real-time (Urutan FIFO Kronologis & Tiket Susulan)</p>
         </div>
         <div class="flex items-center gap-3">
           <button onclick="toggleVoiceSound()" id="btn-toggle-voice" class="text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow">
@@ -641,6 +664,9 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     var db = firebase.database();
 
+    // --- LOGO BASE64 DATA ---
+    var LOGO_BASE64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=";
+
     // --- MASTER DATASET INITIAL ---
     var DEFAULT_CATEGORIES = [
       "ANEKA NASI UDUK", "TAMBAHAN NASI UDUK", "MENU SARAPAN", "ANEKA NASI GORENG", 
@@ -665,6 +691,8 @@
     var categoriesList = [];
     var cart = [];
     var transactions = [];
+    var openBills = {}; // Meja gantung yang aktif
+    var activeEditingTable = null; // null = Trx Baru, string (misal: "Meja 1") = Edit Open Bill
     var activeCategory = "SEMUA";
     var activeKamarTab = "SEMUA";
     var selectedPayment = "";
@@ -673,8 +701,8 @@
     var orderType = "DINE_IN";
     var voiceEnabled = true;
 
-    // Shift Info Persistent (LocalStorage)
-    var shiftInfo = JSON.parse(localStorage.getItem('rr_shift_info')) || {
+    // Shift Info Persistent (Realtime Firebase /active_shift)
+    var shiftInfo = {
       active: false,
       kasirName: "Kasir Utama",
       modalAwal: 0,
@@ -698,7 +726,7 @@
       var today = new Date().toISOString().split('T')[0];
       document.getElementById('filter-start-date').value = today;
       document.getElementById('filter-end-date').value = today;
-      document.getElementById('open-shift-date').value = shiftInfo.date || today;
+      document.getElementById('open-shift-date').value = today;
     }
 
     function toggleTheme() {
@@ -722,9 +750,20 @@
         renderKitchenDisplay();
         renderArsipStrukTable();
       });
+      db.ref('open_bills').once('value', function(snapshot) {
+        openBills = snapshot.val() || {};
+        renderOpenBillsBar();
+      });
+      db.ref('active_shift').once('value', function(snapshot) {
+        var val = snapshot.val();
+        if (val) {
+          shiftInfo = val;
+          updateShiftBannerUI();
+        }
+      });
     }
 
-    // --- FIREBASE SYNC ---
+    // --- FIREBASE SYNC (MULTI-DEVICE REALTIME) ---
     function initFirebaseRealtimeSync() {
       db.ref('categories').on('value', function(snapshot) {
         var val = snapshot.val();
@@ -736,6 +775,22 @@
         menuItems = val ? (Array.isArray(val) ? val : Object.values(val)) : MASTER_132_MENU;
         renderMenuCatalog();
         renderManagerKamarMenuTable();
+      });
+
+      db.ref('active_shift').on('value', function(snapshot) {
+        var val = snapshot.val();
+        if (val) {
+          shiftInfo = val;
+          updateShiftBannerUI();
+          if (activeRoom === 'kasir' && !shiftInfo.active) {
+            openMandatoryShiftModal();
+          }
+        }
+      });
+
+      db.ref('open_bills').on('value', function(snapshot) {
+        openBills = snapshot.val() || {};
+        renderOpenBillsBar();
       });
 
       db.ref('transactions').on('value', function(snapshot) {
@@ -808,7 +863,7 @@
       }
     }
 
-    function buildESCPOSBuffer(trx, isKitchen) {
+    function buildESCPOSBuffer(trx, isKitchen, isAdditionalTicket) {
       var encoder = new TextEncoder();
       var buffer = [];
 
@@ -823,7 +878,7 @@
       if (!isKitchen) {
         addStr("👑 RAJA RASA 👑\nCOFFEE & RESTO\nJl. Setia Budi No. 152A, PKU\nTelp: 0823-8697-9900\n");
       } else {
-        addStr("--- TIKET DAPUR / KITCHEN ---\n");
+        addStr(isAdditionalTicket ? "*** TIKET TAMBAHAN DAPUR ***\n" : "--- TIKET DAPUR / KITCHEN ---\n");
       }
       addStr("--------------------------------\n");
 
@@ -834,11 +889,17 @@
       addStr("Tipe   : " + (trx.orderType === 'DINE_IN' ? '[DINE IN - ' + trx.table + ']' : '[TAKE AWAY]') + "\n");
       addStr("--------------------------------\n");
 
-      trx.items.forEach(function(item) {
+      var targetItems = (isKitchen && isAdditionalTicket && trx.additionalItems) ? trx.additionalItems : trx.items;
+
+      targetItems.forEach(function(item) {
         addStr(item.name + "\n");
         var linePrice = item.qty + " x " + formatRupiah(item.price);
         var sub = formatRupiah(item.price * item.qty);
-        addStr(linePrice + " = " + sub + "\n");
+        if (!isKitchen) {
+          addStr(linePrice + " = " + sub + "\n");
+        } else {
+          addStr("  Qty: " + item.qty + "\n");
+        }
         if (item.itemNote) addStr("  * Note: " + item.itemNote + "\n");
       });
 
@@ -862,12 +923,14 @@
       return buffer;
     }
 
-    // --- AUTO CONVERT TO IMAGE (BYPASS PDF BLANK) ---
-    function renderAndPrintReceiptImage(trx) {
+    // --- AUTO CONVERT TO IMAGE (BYPASS PDF BLANK) WITH EMBEDDED BASE64 LOGO ---
+    function renderAndPrintReceiptImage(trx, isKitchenTicket, isAdditionalTicket) {
       var container = document.getElementById('printable-area');
       container.classList.remove('hidden');
 
-      var itemsHTML = trx.items.map(function(i) {
+      var targetItems = (isKitchenTicket && isAdditionalTicket && trx.additionalItems) ? trx.additionalItems : trx.items;
+
+      var itemsHTML = targetItems.map(function(i) {
         return `<tr><td colspan="2" style="font-weight:bold; padding-top:4px;">${i.name}</td></tr>` +
                `<tr><td>${i.qty} x ${formatRupiah(i.price)}</td><td style="text-align:right;">${formatRupiah(i.price * i.qty)}</td></tr>` +
                (i.itemNote ? `<tr><td colspan="2" style="font-size:9px; font-style:italic;">* Note: ${i.itemNote}</td></tr>` : '');
@@ -875,14 +938,16 @@
 
       container.innerHTML = `
         <div id="receipt-image-card" style="background:#fff; color:#000; padding:12px; font-family:'Courier New', monospace; font-size:11px; width:250px; margin:0 auto; text-align:left;">
-          <div style="text-align:center; font-weight:bold;">
-            <div style="font-size:16px;">👑 RAJA RASA 👑</div>
-            <div style="font-size:12px;">COFFEE & RESTO</div>
+          <div style="text-align:center; font-weight:bold; margin-bottom:6px;">
+            <img src="${LOGO_BASE64}" style="width:40px; height:40px; object-fit:cover; border-radius:50%; margin:0 auto 4px auto; display:block;" />
+            <div style="font-size:15px;">RAJA RASA</div>
+            <div style="font-size:11px;">COFFEE & RESTO</div>
             <div style="font-size:9px; font-weight:normal;">Jl. Setia Budi No. 152A, PKU</div>
             <div style="font-size:9px; font-weight:normal;">Telp: 0823-8697-9900</div>
             <div>--------------------------------</div>
           </div>
           <div style="font-size:10px; margin-bottom:4px;">
+            ${isKitchenTicket ? (isAdditionalTicket ? '<strong>*** TIKET TAMBAHAN DAPUR ***</strong><br>' : '<strong>--- TIKET DAPUR ---</strong><br>') : ''}
             No. Trx : ${trx.code}<br>
             Tgl     : ${trx.date} ${trx.time}<br>
             Kasir   : ${trx.kasir}<br>
@@ -894,26 +959,32 @@
           </table>
           ${trx.note ? '<div style="font-size:9px; margin-bottom:4px; font-weight:bold;">Catatan Global: ' + trx.note + '</div>' : ''}
           <div>--------------------------------</div>
-          <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:12px;">
-            <span>TOTAL:</span>
-            <span>${formatRupiah(trx.total)}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; font-size:9px;">
-            <span>Metode:</span>
-            <style type="text-transform:uppercase;">${trx.paymentMethod}</style>
-          </div>
-          <div style="display:flex; justify-content:space-between; font-size:9px;">
-            <span>Bayar:</span>
-            <span>${formatRupiah(trx.cashGiven)}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; font-size:9px;">
-            <span>Kembali:</span>
-            <span>${formatRupiah(trx.cashChange)}</span>
-          </div>
-          <div>--------------------------------</div>
-          <div style="text-align:center; font-size:9px; margin-top:8px; font-weight:bold;">
-            Terima Kasih Atas Kunjungan Anda!
-          </div>
+          ${!isKitchenTicket ? `
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:12px;">
+              <span>TOTAL:</span>
+              <span>${formatRupiah(trx.total)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:9px;">
+              <span>Metode:</span>
+              <span>${trx.paymentMethod.toUpperCase()}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:9px;">
+              <span>Bayar:</span>
+              <span>${formatRupiah(trx.cashGiven)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:9px;">
+              <span>Kembali:</span>
+              <span>${formatRupiah(trx.cashChange)}</span>
+            </div>
+            <div>--------------------------------</div>
+            <div style="text-align:center; font-size:9px; margin-top:8px; font-weight:bold;">
+              Terima Kasih Atas Kunjungan Anda!
+            </div>
+          ` : `
+            <div style="text-align:center; font-size:9px; margin-top:8px; font-weight:bold;">
+              [ BAGIAN DAPUR / KITCHEN ]
+            </div>
+          `}
         </div>
       `;
 
@@ -993,7 +1064,7 @@
       document.getElementById('screen-landing').classList.remove('hidden');
     }
 
-    // --- SHIFT MANAGEMENT & PERSISTENCE ---
+    // --- SHIFT MANAGEMENT (FIREBASE REALTIME SYNC) ---
     function openMandatoryShiftModal() {
       document.getElementById('open-shift-kasir-name').value = shiftInfo.kasirName || "Kasir Utama";
       document.getElementById('open-shift-modal-awal').value = formatRupiah(shiftInfo.modalAwal || 100000);
@@ -1012,9 +1083,12 @@
         date: dateStr
       };
 
-      localStorage.setItem('rr_shift_info', JSON.stringify(shiftInfo));
-      document.getElementById('modal-open-shift').classList.add('hidden');
-      updateShiftBannerUI();
+      db.ref('active_shift').set(shiftInfo, function(err) {
+        if (!err) {
+          document.getElementById('modal-open-shift').classList.add('hidden');
+          updateShiftBannerUI();
+        }
+      });
     }
 
     function updateShiftBannerUI() {
@@ -1035,9 +1109,12 @@
     function saveChangeKasirOnly() {
       var nName = document.getElementById('change-kasir-input-name').value.trim() || shiftInfo.kasirName;
       shiftInfo.kasirName = nName;
-      localStorage.setItem('rr_shift_info', JSON.stringify(shiftInfo));
-      closeChangeKasirModal();
-      updateShiftBannerUI();
+      db.ref('active_shift').set(shiftInfo, function(err) {
+        if (!err) {
+          closeChangeKasirModal();
+          updateShiftBannerUI();
+        }
+      });
     }
 
     function triggerTutupShift() {
@@ -1066,8 +1143,8 @@
 
         db.ref('shift_history/' + Date.now()).set(shiftReport);
 
-        shiftInfo = { active: false, kasirName: "Kasir Utama", modalAwal: 0, date: new Date().toISOString().split('T')[0] };
-        localStorage.removeItem('rr_shift_info');
+        var resetShift = { active: false, kasirName: "Kasir Utama", modalAwal: 0, date: new Date().toISOString().split('T')[0] };
+        db.ref('active_shift').set(resetShift);
 
         alert("Shift Berhasil Ditutup!");
         exitToLanding();
@@ -1124,6 +1201,120 @@
     function setCategory(cat) {
       activeCategory = cat;
       renderMenuCatalog();
+    }
+
+    // --- OPEN BILLS (TRANSAKSI GANTUNG) SYSTEM ---
+    function renderOpenBillsBar() {
+      var bar = document.getElementById('open-bills-bar');
+      var keys = Object.keys(openBills);
+
+      if (keys.length === 0) {
+        bar.innerHTML = `<span class="text-xs text-gray-400 italic">Tidak ada meja gantung (Open Bill)</span>`;
+        return;
+      }
+
+      bar.innerHTML = keys.map(function(tableKey) {
+        var bill = openBills[tableKey];
+        var isSelected = activeEditingTable === tableKey;
+        return `
+          <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 border ${isSelected ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30' : 'border-gray-200 dark:border-gray-700'} px-3 py-1.5 rounded-xl shadow-sm">
+            <button onclick="loadOpenBill('${tableKey}')" class="text-xs font-bold text-left">
+              <span class="text-amber-600 dark:text-amber-400 block"><i class="fa-solid fa-chair mr-1"></i> ${tableKey}</span>
+              <span class="text-[10px] text-gray-500">${bill.items.length} item (${formatRupiah(bill.total)})</span>
+            </button>
+            <button onclick="deleteOpenBill('${tableKey}')" title="Hapus Meja Gantung" class="text-red-500 hover:text-red-700 text-xs px-1.5 py-0.5 ml-1">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function saveOpenBill() {
+      if (cart.length === 0) return alert("Keranjang masih kosong!");
+      var tableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away_' + Date.now().toString().slice(-4);
+      var totalPrice = cart.reduce(function(sum, i) { return sum + (i.price * i.qty); }, 0);
+      var totalQty = cart.reduce(function(sum, i) { return sum + i.qty; }, 0);
+      var noteStr = document.getElementById('order-note-input')?.value.trim() || '';
+
+      var billData = {
+        table: tableNum,
+        orderType: orderType,
+        items: cart,
+        total: totalPrice,
+        totalQty: totalQty,
+        note: noteStr,
+        kasir: shiftInfo.kasirName,
+        date: shiftInfo.date,
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      db.ref('open_bills/' + tableNum).set(billData, function(err) {
+        if (!err) {
+          alert("Open Bill untuk " + tableNum + " berhasil disimpan!");
+          cart = [];
+          activeEditingTable = null;
+          resetCartUIState();
+          renderCart();
+        }
+      });
+    }
+
+    function loadOpenBill(tableKey) {
+      var bill = openBills[tableKey];
+      if (!bill) return;
+
+      activeEditingTable = tableKey;
+      cart = JSON.parse(JSON.stringify(bill.items)); // Clone items
+      orderType = bill.orderType || 'DINE_IN';
+      setOrderType(orderType);
+      if (orderType === 'DINE_IN') {
+        document.getElementById('select-table-num').value = bill.table;
+      }
+      if (document.getElementById('order-note-input')) {
+        document.getElementById('order-note-input').value = bill.note || '';
+      }
+
+      // UI Switch to Edit Mode
+      document.getElementById('cart-card-container').className = "lg:col-span-5 xl:col-span-4 bg-amber-50/80 dark:bg-amber-950/40 border-2 border-amber-500 rounded-2xl p-4 flex flex-col justify-between shadow-xl transition-colors";
+      document.getElementById('cart-header-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600"></i> Edit Open Bill: ${tableKey}`;
+      document.getElementById('active-bill-indicator').classList.remove('hidden');
+      document.getElementById('lbl-editing-table').innerText = tableKey;
+      document.getElementById('btn-save-openbill').innerText = "Simpan Perubahan Bill";
+      document.getElementById('payment-section-box').classList.add('hidden');
+
+      renderCart();
+      renderOpenBillsBar();
+    }
+
+    function cancelOpenBillEditMode() {
+      activeEditingTable = null;
+      cart = [];
+      resetCartUIState();
+      renderCart();
+      renderOpenBillsBar();
+    }
+
+    function resetCartUIState() {
+      document.getElementById('cart-card-container').className = "lg:col-span-5 xl:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col justify-between shadow-lg min-h-[550px] transition-colors";
+      document.getElementById('cart-header-title').innerHTML = `<i class="fa-solid fa-cart-shopping text-brand-500"></i> Keranjang Pesanan Baru`;
+      document.getElementById('active-bill-indicator').classList.add('hidden');
+      document.getElementById('btn-save-openbill').innerText = "Simpan Open Bill";
+      document.getElementById('payment-section-box').classList.remove('hidden');
+      if (document.getElementById('order-note-input')) document.getElementById('order-note-input').value = '';
+      resetPaymentButtonStyles();
+    }
+
+    function deleteOpenBill(tableKey) {
+      if (confirm("Hapus data Open Bill " + tableKey + "?")) {
+        db.ref('open_bills/' + tableKey).remove(function(err) {
+          if (!err) {
+            if (activeEditingTable === tableKey) cancelOpenBillEditMode();
+            renderOpenBillsBar();
+          }
+        });
+      }
     }
 
     // --- CART SYSTEM ---
@@ -1274,7 +1465,7 @@
       }
     }
 
-    // --- PROCESS CHECKOUT ---
+    // --- PROCESS CHECKOUT (DENGAN DUKUNGAN OPEN BILL & TAMBAHAN ITEM) ---
     async function processCheckout() {
       if (cart.length === 0) return;
 
@@ -1313,24 +1504,30 @@
         kitchenStatus: 'PROSES'
       };
 
+      // Jika sedang edit open bill, hapus open bill tersebut dari Firebase karena sudah dibayar lunas
+      if (activeEditingTable) {
+        db.ref('open_bills/' + activeEditingTable).remove();
+      }
+
       db.ref('transactions/' + trxCode).set(transactionData, async function(err) {
         if (!err) {
           if (btKasirCharacteristic) {
-            var kasirBuf = buildESCPOSBuffer(transactionData, false);
+            var kasirBuf = buildESCPOSBuffer(transactionData, false, false);
             await sendESCPOSToPrinter(btKasirCharacteristic, kasirBuf);
           }
           if (btKitchenCharacteristic) {
-            var kitchenBuf = buildESCPOSBuffer(transactionData, true);
+            var kitchenBuf = buildESCPOSBuffer(transactionData, true, false);
             await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
           }
 
-          renderAndPrintReceiptImage(transactionData);
+          renderAndPrintReceiptImage(transactionData, false, false);
 
           cart = [];
           selectedPayment = "";
-          resetPaymentButtonStyles();
-          document.getElementById('order-note-input').value = "";
+          activeEditingTable = null;
+          resetCartUIState();
           renderCart();
+          renderOpenBillsBar();
           alert("Transaksi " + trxCode + " Berhasil Diselesaikan!");
         }
       });
@@ -1417,6 +1614,31 @@
         db.ref('categories').set(categoriesList);
         alert("Kategori " + nCat + " Berhasil Ditambahkan!");
         renderManagerKamarMenuTable();
+      }
+    }
+
+    function promptDeleteCategory() {
+      var dCat = prompt("Masukkan Nama Kamar / Kategori yang ingin dihapus:").trim().toUpperCase();
+      if (!dCat) return;
+
+      var hasItems = menuItems.some(function(m) { return m.cat === dCat; });
+      if (hasItems) {
+        alert("Gagal: Kamar '" + dCat + "' masih memiliki menu di dalamnya! Hapus atau pindahkan menu terlebih dahulu.");
+        return;
+      }
+
+      var index = categoriesList.indexOf(dCat);
+      if (index !== -1) {
+        categoriesList.splice(index, 1);
+        db.ref('categories').set(categoriesList, function(err) {
+          if (!err) {
+            alert("Kamar " + dCat + " berhasil dihapus!");
+            if (activeKamarTab === dCat) activeKamarTab = "SEMUA";
+            renderManagerKamarMenuTable();
+          }
+        });
+      } else {
+        alert("Kamar tidak ditemukan!");
       }
     }
 
@@ -1532,7 +1754,7 @@
 
     function reprintReceipt(code) {
       var trx = transactions.find(function(t) { return t.code === code; });
-      if (trx) renderAndPrintReceiptImage(trx);
+      if (trx) renderAndPrintReceiptImage(trx, false, false);
     }
 
     // --- DASHBOARD MANAGER ---
@@ -1577,6 +1799,13 @@
 
       renderBarChart(filtered);
       renderPieChart(sortedItems);
+    }
+
+    function resetDateFilter() {
+      var today = new Date().toISOString().split('T')[0];
+      document.getElementById('filter-start-date').value = today;
+      document.getElementById('filter-end-date').value = today;
+      renderManagerDashboard();
     }
 
     function renderBarChart(dataList) {
@@ -1624,7 +1853,7 @@
       });
     }
 
-    // --- KASIR & KITCHEN HISTORY ---
+    // --- KASIR HISTORY ---
     function renderKasirHistory() {
       var tbody = document.getElementById('kasir-history-tbody');
       var today = shiftInfo.date;
@@ -1657,7 +1886,7 @@
       }).join('');
     }
 
-    // --- KITCHEN FIFO DISPLAY ---
+    // --- KITCHEN FIFO DISPLAY (DENGAN TOMBOL CETAK STRUK DIBAWAH NOTA) ---
     function renderKitchenDisplay() {
       var grid = document.getElementById('kitchen-orders-grid');
       var tbody = document.getElementById('kitchen-history-tbody');
@@ -1700,9 +1929,12 @@
                 ${t.note ? `<div class="mt-3 p-2 bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 rounded-lg text-xs text-yellow-900 dark:text-yellow-200 font-bold flex items-start gap-1.5"><i class="fa-solid fa-note-sticky text-yellow-600 mt-0.5"></i><span>Catatan: ${t.note}</span></div>` : ''}
               </div>
 
-              <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+              <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
                 <button onclick="toggleKitchenStatus('${t.code}', '${t.kitchenStatus === 'SELESAI' ? 'PROSES' : 'SELESAI'}')" class="w-full py-2 rounded-xl font-bold text-xs shadow transition ${t.kitchenStatus === 'SELESAI' ? 'bg-emerald-600 text-white' : 'bg-yellow-500 text-gray-900'}">
                   Status: ${t.kitchenStatus === 'SELESAI' ? '🟢 SELESAI' : '🟡 PROSES...'}
+                </button>
+                <button onclick="printKitchenReceipt('${t.code}')" class="w-full py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
+                  <i class="fa-solid fa-print"></i> Cetak Tiket Dapur
                 </button>
               </div>
             </div>
@@ -1720,7 +1952,7 @@
             <td class="p-2.5">${itemsStr} ${t.note ? '<strong class="text-yellow-600 font-bold block">[Catatan: ' + t.note + ']</strong>' : ''}</td>
             <td class="p-2.5 font-bold ${t.kitchenStatus === 'SELESAI' ? 'text-emerald-500' : 'text-yellow-500'}">${t.kitchenStatus || 'PROSES'}</td>
             <td class="p-2.5 text-center">
-              <button onclick="reprintReceipt('${t.code}')" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-print"></i> Tiket Dapur</button>
+              <button onclick="printKitchenReceipt('${t.code}')" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-print"></i> Tiket Dapur</button>
             </td>
           </tr>
         `;
@@ -1729,6 +1961,17 @@
 
     function toggleKitchenStatus(code, status) {
       db.ref('transactions/' + code).update({ kitchenStatus: status });
+    }
+
+    async function printKitchenReceipt(code) {
+      var trx = transactions.find(function(t) { return t.code === code; });
+      if (!trx) return;
+
+      if (btKitchenCharacteristic) {
+        var kitchenBuf = buildESCPOSBuffer(trx, true, false);
+        await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
+      }
+      renderAndPrintReceiptImage(trx, true, false);
     }
 
     function toggleVoiceSound() {
@@ -1785,6 +2028,7 @@
       if (pin === '1240') {
         if (confirm("PERINGATAN: Seluruh data transaksi akan dihapus permanen!")) {
           db.ref('transactions').remove();
+          db.ref('open_bills').remove();
         }
       } else if (pin !== null) {
         alert("PIN Salah!");
