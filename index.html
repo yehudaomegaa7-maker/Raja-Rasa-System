@@ -501,7 +501,16 @@
           </h2>
           <p class="text-xs text-gray-500">Layar Pantau Dapur Real-time (Urutan FIFO Kronologis & Open Bill / Tiket Susulan)</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- ATUR TANGGAL SHIFT KITCHEN AGAR SINKRON DENGAN KASIR -->
+          <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-3 py-1 rounded-xl text-xs">
+            <i class="fa-solid fa-calendar-day text-emerald-600 dark:text-emerald-400"></i>
+            <span class="font-semibold text-gray-600 dark:text-gray-300">Tgl Masak:</span>
+            <input type="date" id="kitchen-filter-date" onchange="changeKitchenDate(this.value)" class="bg-transparent font-bold text-gray-800 dark:text-white focus:outline-none">
+          </div>
+          <button onclick="syncKitchenToKasirDate()" title="Samakan dengan tanggal kasir aktif" class="text-xs px-2.5 py-1.5 rounded-xl font-bold bg-brand-500 hover:bg-brand-600 text-white shadow transition">
+            <i class="fa-solid fa-rotate mr-1"></i> Sync Kasir
+          </button>
           <button onclick="toggleVoiceSound()" id="btn-toggle-voice" class="text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow">
             <i class="fa-solid fa-volume-high"></i> Suara: ON
           </button>
@@ -700,6 +709,7 @@
     var pendingPINRoom = null;
     var orderType = "DINE_IN";
     var voiceEnabled = true;
+    var kitchenSelectedDate = new Date().toISOString().split('T')[0]; // State Tanggal Khusus Kitchen
 
     // Shift Info Persistent (Realtime Firebase /active_shift)
     var shiftInfo = {
@@ -727,6 +737,8 @@
       document.getElementById('filter-start-date').value = today;
       document.getElementById('filter-end-date').value = today;
       document.getElementById('open-shift-date').value = today;
+      document.getElementById('kitchen-filter-date').value = today;
+      kitchenSelectedDate = today;
     }
 
     function toggleTheme() {
@@ -744,14 +756,15 @@
     function refreshCurrentRoom() {
       db.ref('transactions').once('value', function(snapshot) {
         var val = snapshot.val();
-        transactions = val ? Object.values(val) : [];
+        transactions = parseFirebaseArray(val);
         renderKasirHistory();
         renderManagerDashboard();
         renderKitchenDisplay();
         renderArsipStrukTable();
       });
       db.ref('open_bills').once('value', function(snapshot) {
-        openBills = snapshot.val() || {};
+        var val = snapshot.val();
+        openBills = val || {};
         renderOpenBillsBar();
         renderKitchenDisplay();
       });
@@ -764,6 +777,13 @@
       });
     }
 
+    // Helper Aman Pembacaan Firebase Snapshot (Object -> Array)
+    function parseFirebaseArray(data) {
+      if (!data) return [];
+      if (Array.isArray(data)) return data.filter(Boolean);
+      return Object.keys(data).map(function(k) { return data[k]; }).filter(Boolean);
+    }
+
     // --- FIREBASE SYNC (MULTI-DEVICE REALTIME) ---
     function initFirebaseRealtimeSync() {
       db.ref('categories').on('value', function(snapshot) {
@@ -773,7 +793,8 @@
 
       db.ref('menu_items').on('value', function(snapshot) {
         var val = snapshot.val();
-        menuItems = val ? (Array.isArray(val) ? val : Object.values(val)) : MASTER_132_MENU;
+        menuItems = parseFirebaseArray(val);
+        if (menuItems.length === 0) menuItems = MASTER_132_MENU;
         renderMenuCatalog();
         renderManagerKamarMenuTable();
       });
@@ -805,7 +826,7 @@
 
       db.ref('transactions').on('value', function(snapshot) {
         var val = snapshot.val();
-        var newTrxList = val ? Object.values(val) : [];
+        var newTrxList = parseFirebaseArray(val);
 
         if (previousTrxCount >= 0 && newTrxList.length > previousTrxCount) {
           if (activeRoom === 'kitchen' && voiceEnabled) playVoiceNotification();
@@ -899,7 +920,7 @@
       addStr("Tipe   : " + (trx.orderType === 'DINE_IN' ? '[DINE IN - ' + trx.table + ']' : '[TAKE AWAY]') + "\n");
       addStr("--------------------------------\n");
 
-      var targetItems = (isKitchen && isAdditionalTicket && trx.additionalItems) ? trx.additionalItems : trx.items;
+      var targetItems = (isKitchen && isAdditionalTicket && trx.additionalItems) ? trx.additionalItems : (trx.items || []);
 
       targetItems.forEach(function(item) {
         addStr(item.name + "\n");
@@ -933,12 +954,12 @@
       return buffer;
     }
 
-    // --- AUTO CONVERT TO IMAGE (BYPASS PDF BLANK) WITH EMBEDDED BASE64 LOGO ---
+    // --- AUTO CONVERT TO IMAGE WITH EMBEDDED BASE64 LOGO ---
     function renderAndPrintReceiptImage(trx, isKitchenTicket, isAdditionalTicket) {
       var container = document.getElementById('printable-area');
       container.classList.remove('hidden');
 
-      var targetItems = (isKitchenTicket && isAdditionalTicket && trx.additionalItems) ? trx.additionalItems : trx.items;
+      var targetItems = (isKitchenTicket && isAdditionalTicket && trx.additionalItems) ? trx.additionalItems : (trx.items || []);
 
       var itemsHTML = targetItems.map(function(i) {
         return `<tr><td colspan="2" style="font-weight:bold; padding-top:4px;">${i.name}</td></tr>` +
@@ -1055,7 +1076,7 @@
         renderManagerDashboard();
       } else if (room === 'kitchen') {
         document.getElementById('workspace-kitchen').classList.remove('hidden');
-        renderKitchenDisplay();
+        syncKitchenToKasirDate();
       }
     }
 
@@ -1091,6 +1112,7 @@
         if (!err) {
           document.getElementById('modal-open-shift').classList.add('hidden');
           updateShiftBannerUI();
+          syncKitchenToKasirDate();
         }
       });
     }
@@ -1153,6 +1175,19 @@
         alert("Shift Berhasil Ditutup!");
         exitToLanding();
       }
+    }
+
+    // --- KITCHEN DATE CONTROL & SYNC ---
+    function changeKitchenDate(newDate) {
+      kitchenSelectedDate = newDate;
+      renderKitchenDisplay();
+    }
+
+    function syncKitchenToKasirDate() {
+      kitchenSelectedDate = shiftInfo.date || new Date().toISOString().split('T')[0];
+      var input = document.getElementById('kitchen-filter-date');
+      if (input) input.value = kitchenSelectedDate;
+      renderKitchenDisplay();
     }
 
     // --- MENU CATALOG & ITEM-LEVEL NOTES ---
@@ -1220,11 +1255,12 @@
       bar.innerHTML = keys.map(function(tableKey) {
         var bill = openBills[tableKey];
         var isSelected = activeEditingTable === tableKey;
+        var itemCount = bill.items ? bill.items.length : 0;
         return `
           <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 border ${isSelected ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30' : 'border-gray-200 dark:border-gray-700'} px-3 py-1.5 rounded-xl shadow-sm">
             <button onclick="loadOpenBill('${tableKey}')" class="text-xs font-bold text-left">
               <span class="text-amber-600 dark:text-amber-400 block"><i class="fa-solid fa-chair mr-1"></i> ${tableKey}</span>
-              <span class="text-[10px] text-gray-500">${bill.items.length} item (${formatRupiah(bill.total)})</span>
+              <span class="text-[10px] text-gray-500">${itemCount} item (${formatRupiah(bill.total || 0)})</span>
             </button>
             <button onclick="deleteOpenBill('${tableKey}')" title="Hapus Meja Gantung" class="text-red-500 hover:text-red-700 text-xs px-1.5 py-0.5 ml-1">
               <i class="fa-solid fa-xmark"></i>
@@ -1234,9 +1270,16 @@
       }).join('');
     }
 
+    // PEMASANGAN ID FIREBASE BERSIH TANPA KARAKTER ILEGAL (. # $ [ ])
+    function sanitizeFirebaseKey(keyStr) {
+      return keyStr.replace(/[\.\#\$\/\[\]]/g, '_');
+    }
+
     async function saveOpenBill() {
       if (cart.length === 0) return alert("Keranjang masih kosong!");
-      var tableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away_' + Date.now().toString().slice(-4);
+      var rawTableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away_' + Date.now().toString().slice(-4);
+      var tableNum = sanitizeFirebaseKey(rawTableNum);
+
       var totalPrice = cart.reduce(function(sum, i) { return sum + (i.price * i.qty); }, 0);
       var totalQty = cart.reduce(function(sum, i) { return sum + i.qty; }, 0);
       var noteStr = document.getElementById('order-note-input')?.value.trim() || '';
@@ -1246,7 +1289,6 @@
       var isAdditional = false;
 
       if (existingBill && existingBill.items) {
-        // Hitung selisih/item susulan untuk tiket dapur tambahan
         isAdditional = true;
         cart.forEach(function(newItem) {
           var oldItem = existingBill.items.find(function(o) { return o.id === newItem.id; });
@@ -1277,7 +1319,7 @@
         kitchenStatus: 'PROSES'
       };
 
-      // Direct Sync ke Firebase /open_bills (Dapur otomatis membaca secara Real-time)
+      // Direct Sync ke Firebase /open_bills & Otomatis Terbaca di KDS
       db.ref('open_bills/' + tableNum).set(billData, async function(err) {
         if (!err) {
           if (btKitchenCharacteristic) {
@@ -1299,7 +1341,7 @@
       if (!bill) return;
 
       activeEditingTable = tableKey;
-      cart = JSON.parse(JSON.stringify(bill.items)); // Clone items
+      cart = JSON.parse(JSON.stringify(bill.items || [])); // Clone items
       orderType = bill.orderType || 'DINE_IN';
       setOrderType(orderType);
       if (orderType === 'DINE_IN') {
@@ -1745,9 +1787,9 @@
       var kasirVal = document.getElementById('arsip-filter-kasir')?.value.toLowerCase() || "";
 
       var filtered = transactions.filter(function(t) {
-        var matchQ = !query || t.code.toLowerCase().indexOf(query) !== -1 || t.items.some(function(i) { return i.name.toLowerCase().indexOf(query) !== -1; });
+        var matchQ = !query || t.code.toLowerCase().indexOf(query) !== -1 || (t.items && t.items.some(function(i) { return i.name.toLowerCase().indexOf(query) !== -1; }));
         var matchD = !dateVal || t.date === dateVal;
-        var matchK = !kasirVal || t.kasir.toLowerCase().indexOf(kasirVal) !== -1;
+        var matchK = !kasirVal || (t.kasir && t.kasir.toLowerCase().indexOf(kasirVal) !== -1);
         return matchQ && matchD && matchK;
       });
 
@@ -1758,7 +1800,7 @@
       }
 
       tbody.innerHTML = filtered.slice().reverse().map(function(t) {
-        var itemsStr = t.items.map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
+        var itemsStr = (t.items || []).map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
         return `
           <tr class="${t.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400 line-through' : ''}">
             <td class="p-2.5">${t.date} ${t.time}</td>
@@ -1805,14 +1847,14 @@
 
       var successTrx = filtered.filter(function(t) { return t.status !== 'CANCELLED'; });
       var cancelledTrx = filtered.filter(function(t) { return t.status === 'CANCELLED'; });
-      var totalOmzet = successTrx.reduce(function(sum, t) { return sum + t.total; }, 0);
+      var totalOmzet = successTrx.reduce(function(sum, t) { return sum + (t.total || 0); }, 0);
 
       var cashTotal = 0, qrisTotal = 0, transferTotal = 0;
       successTrx.forEach(function(t) {
         var pm = (t.paymentMethod || '').toLowerCase();
-        if (pm === 'cash') cashTotal += t.total;
-        else if (pm === 'qris') qrisTotal += t.total;
-        else if (pm === 'transfer') transferTotal += t.total;
+        if (pm === 'cash') cashTotal += (t.total || 0);
+        else if (pm === 'qris') qrisTotal += (t.total || 0);
+        else if (pm === 'transfer') transferTotal += (t.total || 0);
       });
 
       document.getElementById('manager-metric-omzet').innerText = formatRupiah(totalOmzet);
@@ -1825,7 +1867,7 @@
 
       var itemCounts = {};
       successTrx.forEach(function(t) {
-        t.items.forEach(function(i) { itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty; });
+        (t.items || []).forEach(function(i) { itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty; });
       });
       var sortedItems = Object.entries(itemCounts).sort(function(a, b) { return b[1] - a[1]; });
       document.getElementById('manager-metric-topitem').innerText = sortedItems[0] ? sortedItems[0][0] + ' (' + sortedItems[0][1] + ' porsi)' : '-';
@@ -1898,7 +1940,7 @@
       }
 
       tbody.innerHTML = todayTrx.map(function(t) {
-        var itemsStr = t.items.map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
+        var itemsStr = (t.items || []).map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
         var isCancelled = t.status === 'CANCELLED';
 
         return `
@@ -1919,19 +1961,19 @@
       }).join('');
     }
 
-    // --- KITCHEN FIFO DISPLAY (DENGAN INTEGRASI REALTIME OPEN BILL & TIKET SUSULAN) ---
+    // --- KITCHEN FIFO DISPLAY (REALTIME OPEN BILL & DUAL TANGGAL SYNC) ---
     function renderKitchenDisplay() {
       var grid = document.getElementById('kitchen-orders-grid');
       var tbody = document.getElementById('kitchen-history-tbody');
-      var today = shiftInfo.date;
+      var targetDate = kitchenSelectedDate || shiftInfo.date;
 
-      // Ambil transaksi LUNAS dan OPEN BILLS aktif
+      // Ambil transaksi LUNAS dan OPEN BILLS aktif sesuai tanggal KDS yang dipilih
       var completedOrders = transactions.filter(function(t) { 
-        return t.date === today && t.status !== 'CANCELLED'; 
+        return t.date === targetDate && t.status !== 'CANCELLED'; 
       });
 
       var openBillList = Object.values(openBills).filter(function(b) {
-        return b.date === today;
+        return b.date === targetDate;
       });
 
       // Gabungkan seluruh pesanan aktif untuk KDS
@@ -1940,14 +1982,14 @@
       });
 
       if (activeOrders.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 text-gray-400"><i class="fa-solid fa-utensils text-4xl mb-2 opacity-40"></i><p class="font-bold">Tidak ada pesanan aktif di dapur</p></div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 text-gray-400"><i class="fa-solid fa-utensils text-4xl mb-2 opacity-40"></i><p class="font-bold">Tidak ada pesanan aktif di dapur untuk tanggal ${formatDateIndo(targetDate)}</p></div>`;
       } else {
         grid.innerHTML = activeOrders.map(function(t) {
           var isDineIn = t.orderType === 'DINE_IN';
           var tableText = isDineIn ? t.table : 'TAKE AWAY';
           var isOpenBill = !t.code; // Jika tidak ada kode TRX, berarti Open Bill aktif
 
-          var targetItems = (t.isAdditional && t.additionalItems && t.additionalItems.length > 0) ? t.additionalItems : t.items;
+          var targetItems = (t.isAdditional && t.additionalItems && t.additionalItems.length > 0) ? t.additionalItems : (t.items || []);
 
           var itemsList = targetItems.map(function(i) {
             return `<li class="flex justify-between border-b border-gray-50 dark:border-gray-700/30 pb-1"><span>${i.name} ${i.itemNote ? '<span class="text-orange-500 font-bold">[' + i.itemNote + ']</span>' : ''}</span><span class="text-brand-600 font-extrabold text-sm ml-2">x${i.qty}</span></li>`;
@@ -1992,7 +2034,7 @@
 
       tbody.innerHTML = activeOrders.map(function(t) {
         var isOpenBill = !t.code;
-        var targetItems = (t.isAdditional && t.additionalItems && t.additionalItems.length > 0) ? t.additionalItems : t.items;
+        var targetItems = (t.isAdditional && t.additionalItems && t.additionalItems.length > 0) ? t.additionalItems : (t.items || []);
         var itemsStr = targetItems.map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
         return `
           <tr>
@@ -2053,7 +2095,7 @@
 
       var excelRows = [];
       filtered.forEach(function(t) {
-        t.items.forEach(function(item) {
+        (t.items || []).forEach(function(item) {
           excelRows.push({
             "Tanggal": t.date, "Waktu": t.time, "Kode Transaksi": t.code, "Kasir": t.kasir,
             "Tipe": t.orderType, "Meja": t.table || '-', "Nama Menu": item.name, "Catatan Item": item.itemNote || '-',
@@ -2109,7 +2151,7 @@
     }
 
     function formatRupiah(num) {
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0);
     }
 
     function formatRupiahInput(input) {
