@@ -499,7 +499,7 @@
           <h2 class="font-bold text-lg text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
             <i class="fa-solid fa-kitchen-set"></i> Kitchen Display System (KDS)
           </h2>
-          <p class="text-xs text-gray-500">Layar Pantau Dapur Real-time (Urutan FIFO Kronologis & Tiket Susulan)</p>
+          <p class="text-xs text-gray-500">Layar Pantau Dapur Real-time (Urutan FIFO Kronologis & Open Bill / Tiket Susulan)</p>
         </div>
         <div class="flex items-center gap-3">
           <button onclick="toggleVoiceSound()" id="btn-toggle-voice" class="text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow">
@@ -522,7 +522,7 @@
             <thead class="bg-gray-100 dark:bg-gray-700/50 text-gray-500 uppercase">
               <tr>
                 <th class="p-2.5">Waktu</th>
-                <th class="p-2.5">Kode Trx</th>
+                <th class="p-2.5">Kode Trx / Open Bill</th>
                 <th class="p-2.5">Tipe / Meja</th>
                 <th class="p-2.5">Detail Pesanan & Item Notes</th>
                 <th class="p-2.5">Status Dapur</th>
@@ -753,6 +753,7 @@
       db.ref('open_bills').once('value', function(snapshot) {
         openBills = snapshot.val() || {};
         renderOpenBillsBar();
+        renderKitchenDisplay();
       });
       db.ref('active_shift').once('value', function(snapshot) {
         var val = snapshot.val();
@@ -789,8 +790,17 @@
       });
 
       db.ref('open_bills').on('value', function(snapshot) {
-        openBills = snapshot.val() || {};
+        var val = snapshot.val();
+        var prevCount = Object.keys(openBills).length;
+        openBills = val || {};
+        var newCount = Object.keys(openBills).length;
+
+        if (newCount > prevCount && activeRoom === 'kitchen' && voiceEnabled) {
+          playVoiceNotification();
+        }
+
         renderOpenBillsBar();
+        renderKitchenDisplay();
       });
 
       db.ref('transactions').on('value', function(snapshot) {
@@ -883,7 +893,7 @@
       addStr("--------------------------------\n");
 
       buffer.push(0x1B, 0x61, 0x00); // Align Left
-      addStr("No Trx : " + trx.code + "\n");
+      addStr("No Trx : " + (trx.code || trx.table) + "\n");
       addStr("Tgl    : " + trx.date + " " + trx.time + "\n");
       addStr("Kasir  : " + trx.kasir + "\n");
       addStr("Tipe   : " + (trx.orderType === 'DINE_IN' ? '[DINE IN - ' + trx.table + ']' : '[TAKE AWAY]') + "\n");
@@ -910,9 +920,9 @@
       if (!isKitchen) {
         addStr("--------------------------------\n");
         addStr("TOTAL   : " + formatRupiah(trx.total) + "\n");
-        addStr("METODE  : " + trx.paymentMethod.toUpperCase() + "\n");
-        addStr("BAYAR   : " + formatRupiah(trx.cashGiven) + "\n");
-        addStr("KEMBALI : " + formatRupiah(trx.cashChange) + "\n");
+        addStr("METODE  : " + (trx.paymentMethod ? trx.paymentMethod.toUpperCase() : 'OPEN BILL') + "\n");
+        if (trx.cashGiven) addStr("BAYAR   : " + formatRupiah(trx.cashGiven) + "\n");
+        if (trx.cashChange) addStr("KEMBALI : " + formatRupiah(trx.cashChange) + "\n");
         addStr("--------------------------------\n");
         buffer.push(0x1B, 0x61, 0x01);
         addStr("Terima Kasih Atas Kunjungan Anda!\n\n\n\n");
@@ -948,7 +958,7 @@
           </div>
           <div style="font-size:10px; margin-bottom:4px;">
             ${isKitchenTicket ? (isAdditionalTicket ? '<strong>*** TIKET TAMBAHAN DAPUR ***</strong><br>' : '<strong>--- TIKET DAPUR ---</strong><br>') : ''}
-            No. Trx : ${trx.code}<br>
+            No. Trx : ${trx.code || trx.table}<br>
             Tgl     : ${trx.date} ${trx.time}<br>
             Kasir   : ${trx.kasir}<br>
             Tipe    : <strong>${trx.orderType === 'DINE_IN' ? trx.table : 'TAKE AWAY'}</strong>
@@ -966,16 +976,10 @@
             </div>
             <div style="display:flex; justify-content:space-between; font-size:9px;">
               <span>Metode:</span>
-              <span>${trx.paymentMethod.toUpperCase()}</span>
+              <span>${trx.paymentMethod ? trx.paymentMethod.toUpperCase() : 'OPEN BILL'}</span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:9px;">
-              <span>Bayar:</span>
-              <span>${formatRupiah(trx.cashGiven)}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:9px;">
-              <span>Kembali:</span>
-              <span>${formatRupiah(trx.cashChange)}</span>
-            </div>
+            ${trx.cashGiven ? `<div style="display:flex; justify-content:space-between; font-size:9px;"><span>Bayar:</span><span>${formatRupiah(trx.cashGiven)}</span></div>` : ''}
+            ${trx.cashChange ? `<div style="display:flex; justify-content:space-between; font-size:9px;"><span>Kembali:</span><span>${formatRupiah(trx.cashChange)}</span></div>` : ''}
             <div>--------------------------------</div>
             <div style="text-align:center; font-size:9px; margin-top:8px; font-weight:bold;">
               Terima Kasih Atas Kunjungan Anda!
@@ -1203,7 +1207,7 @@
       renderMenuCatalog();
     }
 
-    // --- OPEN BILLS (TRANSAKSI GANTUNG) SYSTEM ---
+    // --- OPEN BILLS (TRANSAKSI GANTUNG) SYSTEM WITH REALTIME KITCHEN SYNC ---
     function renderOpenBillsBar() {
       var bar = document.getElementById('open-bills-bar');
       var keys = Object.keys(openBills);
@@ -1230,29 +1234,58 @@
       }).join('');
     }
 
-    function saveOpenBill() {
+    async function saveOpenBill() {
       if (cart.length === 0) return alert("Keranjang masih kosong!");
       var tableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away_' + Date.now().toString().slice(-4);
       var totalPrice = cart.reduce(function(sum, i) { return sum + (i.price * i.qty); }, 0);
       var totalQty = cart.reduce(function(sum, i) { return sum + i.qty; }, 0);
       var noteStr = document.getElementById('order-note-input')?.value.trim() || '';
 
+      var existingBill = openBills[tableNum];
+      var additionalItems = [];
+      var isAdditional = false;
+
+      if (existingBill && existingBill.items) {
+        // Hitung selisih/item susulan untuk tiket dapur tambahan
+        isAdditional = true;
+        cart.forEach(function(newItem) {
+          var oldItem = existingBill.items.find(function(o) { return o.id === newItem.id; });
+          var oldQty = oldItem ? oldItem.qty : 0;
+          var diffQty = newItem.qty - oldQty;
+          if (diffQty > 0) {
+            additionalItems.push({
+              id: newItem.id, code: newItem.code, name: newItem.name, cat: newItem.cat,
+              price: newItem.price, qty: diffQty, itemNote: newItem.itemNote || ''
+            });
+          }
+        });
+      }
+
       var billData = {
         table: tableNum,
         orderType: orderType,
         items: cart,
+        additionalItems: additionalItems,
+        isAdditional: isAdditional,
         total: totalPrice,
         totalQty: totalQty,
         note: noteStr,
         kasir: shiftInfo.kasirName,
         date: shiftInfo.date,
         time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        kitchenStatus: 'PROSES'
       };
 
-      db.ref('open_bills/' + tableNum).set(billData, function(err) {
+      // Direct Sync ke Firebase /open_bills (Dapur otomatis membaca secara Real-time)
+      db.ref('open_bills/' + tableNum).set(billData, async function(err) {
         if (!err) {
-          alert("Open Bill untuk " + tableNum + " berhasil disimpan!");
+          if (btKitchenCharacteristic) {
+            var kitchenBuf = buildESCPOSBuffer(billData, true, isAdditional);
+            await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
+          }
+
+          alert("Open Bill " + tableNum + " berhasil disimpan & terkirim ke KDS Dapur!");
           cart = [];
           activeEditingTable = null;
           resetCartUIState();
@@ -1886,15 +1919,23 @@
       }).join('');
     }
 
-    // --- KITCHEN FIFO DISPLAY (DENGAN TOMBOL CETAK STRUK DIBAWAH NOTA) ---
+    // --- KITCHEN FIFO DISPLAY (DENGAN INTEGRASI REALTIME OPEN BILL & TIKET SUSULAN) ---
     function renderKitchenDisplay() {
       var grid = document.getElementById('kitchen-orders-grid');
       var tbody = document.getElementById('kitchen-history-tbody');
       var today = shiftInfo.date;
 
-      var activeOrders = transactions.filter(function(t) { 
+      // Ambil transaksi LUNAS dan OPEN BILLS aktif
+      var completedOrders = transactions.filter(function(t) { 
         return t.date === today && t.status !== 'CANCELLED'; 
-      }).sort(function(a, b) { 
+      });
+
+      var openBillList = Object.values(openBills).filter(function(b) {
+        return b.date === today;
+      });
+
+      // Gabungkan seluruh pesanan aktif untuk KDS
+      var activeOrders = completedOrders.concat(openBillList).sort(function(a, b) { 
         return (a.timestamp || 0) - (b.timestamp || 0); 
       });
 
@@ -1904,17 +1945,24 @@
         grid.innerHTML = activeOrders.map(function(t) {
           var isDineIn = t.orderType === 'DINE_IN';
           var tableText = isDineIn ? t.table : 'TAKE AWAY';
-          
-          var itemsList = t.items.map(function(i) {
+          var isOpenBill = !t.code; // Jika tidak ada kode TRX, berarti Open Bill aktif
+
+          var targetItems = (t.isAdditional && t.additionalItems && t.additionalItems.length > 0) ? t.additionalItems : t.items;
+
+          var itemsList = targetItems.map(function(i) {
             return `<li class="flex justify-between border-b border-gray-50 dark:border-gray-700/30 pb-1"><span>${i.name} ${i.itemNote ? '<span class="text-orange-500 font-bold">[' + i.itemNote + ']</span>' : ''}</span><span class="text-brand-600 font-extrabold text-sm ml-2">x${i.qty}</span></li>`;
           }).join('');
 
           return `
-            <div class="bg-white dark:bg-gray-800 border-2 ${t.kitchenStatus === 'SELESAI' ? 'border-emerald-500/50' : 'border-yellow-500'} rounded-2xl p-4 shadow-md flex flex-col justify-between">
+            <div class="bg-white dark:bg-gray-800 border-2 ${isOpenBill ? 'border-amber-500 bg-amber-50/20' : (t.kitchenStatus === 'SELESAI' ? 'border-emerald-500/50' : 'border-yellow-500')} rounded-2xl p-4 shadow-md flex flex-col justify-between">
               <div>
                 <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
                   <div>
-                    <span class="font-bold text-sm text-brand-600 block">${t.code}</span>
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-sm text-brand-600 block">${t.code || t.table}</span>
+                      ${isOpenBill ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-500 text-white animate-pulse">OPEN BILL</span>' : ''}
+                      ${t.isAdditional ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-red-600 text-white animate-bounce">🚨 TAMBAHAN</span>' : ''}
+                    </div>
                     <span class="text-xs font-black px-2 py-0.5 rounded-md ${isDineIn ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">
                       <i class="fa-solid ${isDineIn ? 'fa-chair' : 'fa-bag-shopping'} mr-1"></i> ${tableText}
                     </span>
@@ -1930,10 +1978,10 @@
               </div>
 
               <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
-                <button onclick="toggleKitchenStatus('${t.code}', '${t.kitchenStatus === 'SELESAI' ? 'PROSES' : 'SELESAI'}')" class="w-full py-2 rounded-xl font-bold text-xs shadow transition ${t.kitchenStatus === 'SELESAI' ? 'bg-emerald-600 text-white' : 'bg-yellow-500 text-gray-900'}">
+                <button onclick="toggleKitchenStatus('${t.code || t.table}', '${t.kitchenStatus === 'SELESAI' ? 'PROSES' : 'SELESAI'}', ${isOpenBill})" class="w-full py-2 rounded-xl font-bold text-xs shadow transition ${t.kitchenStatus === 'SELESAI' ? 'bg-emerald-600 text-white' : 'bg-yellow-500 text-gray-900'}">
                   Status: ${t.kitchenStatus === 'SELESAI' ? '🟢 SELESAI' : '🟡 PROSES...'}
                 </button>
-                <button onclick="printKitchenReceipt('${t.code}')" class="w-full py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
+                <button onclick="printKitchenReceipt('${t.code || t.table}', ${isOpenBill})" class="w-full py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
                   <i class="fa-solid fa-print"></i> Cetak Tiket Dapur
                 </button>
               </div>
@@ -1943,35 +1991,43 @@
       }
 
       tbody.innerHTML = activeOrders.map(function(t) {
-        var itemsStr = t.items.map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
+        var isOpenBill = !t.code;
+        var targetItems = (t.isAdditional && t.additionalItems && t.additionalItems.length > 0) ? t.additionalItems : t.items;
+        var itemsStr = targetItems.map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
         return `
           <tr>
             <td class="p-2.5">${t.time}</td>
-            <td class="p-2.5 font-bold">${t.code}</td>
+            <td class="p-2.5 font-bold">${t.code || (t.table + ' [OPEN BILL]')}</td>
             <td class="p-2.5 font-bold text-brand-600">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
             <td class="p-2.5">${itemsStr} ${t.note ? '<strong class="text-yellow-600 font-bold block">[Catatan: ' + t.note + ']</strong>' : ''}</td>
             <td class="p-2.5 font-bold ${t.kitchenStatus === 'SELESAI' ? 'text-emerald-500' : 'text-yellow-500'}">${t.kitchenStatus || 'PROSES'}</td>
             <td class="p-2.5 text-center">
-              <button onclick="printKitchenReceipt('${t.code}')" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-print"></i> Tiket Dapur</button>
+              <button onclick="printKitchenReceipt('${t.code || t.table}', ${isOpenBill})" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-print"></i> Tiket Dapur</button>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    function toggleKitchenStatus(code, status) {
-      db.ref('transactions/' + code).update({ kitchenStatus: status });
+    function toggleKitchenStatus(key, status, isOpenBill) {
+      if (isOpenBill) {
+        db.ref('open_bills/' + key).update({ kitchenStatus: status });
+      } else {
+        db.ref('transactions/' + key).update({ kitchenStatus: status });
+      }
     }
 
-    async function printKitchenReceipt(code) {
-      var trx = transactions.find(function(t) { return t.code === code; });
+    async function printKitchenReceipt(key, isOpenBill) {
+      var trx = isOpenBill ? openBills[key] : transactions.find(function(t) { return t.code === key; });
       if (!trx) return;
 
+      var isAdd = trx.isAdditional || false;
+
       if (btKitchenCharacteristic) {
-        var kitchenBuf = buildESCPOSBuffer(trx, true, false);
+        var kitchenBuf = buildESCPOSBuffer(trx, true, isAdd);
         await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
       }
-      renderAndPrintReceiptImage(trx, true, false);
+      renderAndPrintReceiptImage(trx, true, isAdd);
     }
 
     function toggleVoiceSound() {
