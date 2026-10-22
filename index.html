@@ -355,20 +355,20 @@
           <div class="lg:col-span-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm flex flex-col justify-between">
             <div>
               <p class="text-xs text-gray-500">Total Omzet Penjualan</p>
-              <h3 id="manager-metric-omzet" class="text-2xl font-extrabold text-brand-600 dark:text-brand-500 mt-1">Rp 0</h3>
+              <h3 id="manager-metric-omzet" class="text-2xl font-extrabold text-brand-600 dark:text-brand-500 mt-1">Rp0</h3>
             </div>
             <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 space-y-1 text-xs">
               <div class="flex justify-between items-center text-gray-600 dark:text-gray-300">
                 <span><i class="fa-solid fa-money-bill-wave text-emerald-500 mr-1"></i> Cash:</span>
-                <strong id="manager-omzet-cash" class="text-emerald-600 dark:text-emerald-400">Rp 0</strong>
+                <strong id="manager-omzet-cash" class="text-emerald-600 dark:text-emerald-400">Rp0</strong>
               </div>
               <div class="flex justify-between items-center text-gray-600 dark:text-gray-300">
                 <span><i class="fa-solid fa-qrcode text-yellow-500 mr-1"></i> QR Mandiri:</span>
-                <strong id="manager-omzet-qris" class="text-yellow-600 dark:text-yellow-400">Rp 0</strong>
+                <strong id="manager-omzet-qris" class="text-yellow-600 dark:text-yellow-400">Rp0</strong>
               </div>
               <div class="flex justify-between items-center text-gray-600 dark:text-gray-300">
                 <span><i class="fa-solid fa-building-columns text-blue-500 mr-1"></i> Trf Mandiri:</span>
-                <strong id="manager-omzet-transfer" class="text-blue-600 dark:text-blue-400">Rp 0</strong>
+                <strong id="manager-omzet-transfer" class="text-blue-600 dark:text-blue-400">Rp0</strong>
               </div>
             </div>
           </div>
@@ -502,7 +502,6 @@
           <p class="text-xs text-gray-500">Layar Pantau Dapur Real-time (Urutan FIFO Kronologis & Open Bill / Tiket Susulan)</p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-          <!-- ATUR TANGGAL SHIFT KITCHEN AGAR SINKRON DENGAN KASIR -->
           <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-3 py-1 rounded-xl text-xs">
             <i class="fa-solid fa-calendar-day text-emerald-600 dark:text-emerald-400"></i>
             <span class="font-semibold text-gray-600 dark:text-gray-300">Tgl Masak:</span>
@@ -567,7 +566,7 @@
 
       <div class="flex justify-between items-center text-sm font-bold pt-1 border-t border-gray-200 dark:border-gray-700">
         <span class="text-gray-600 dark:text-gray-300">Total Tagihan Lunas:</span>
-        <span id="pay-modal-total-price" class="text-brand-600 dark:text-brand-400 text-lg">Rp 0</span>
+        <span id="pay-modal-total-price" class="text-brand-600 dark:text-brand-400 text-lg">Rp0</span>
       </div>
 
       <!-- Pilihan Metode Bayar -->
@@ -894,7 +893,7 @@
       });
     }
 
-    // --- BLUETOOTH ESC/POS (CLEAN ASCII FORMATTING) ---
+    // --- BLUETOOTH ESC/POS (CLEAN ASCII FORMATTING PERFECTED) ---
     async function connectBTPrinter(target) {
       try {
         var device = await navigator.bluetooth.requestDevice({
@@ -947,6 +946,7 @@
       }
     }
 
+    // FUNGSI UTAMA FORMAT RUPIAH ASCII PURE (100% BEBAS KARAKTER BROWSER \u00A0 & BEBAS HURUF A)
     function formatRupiahASCII(num) {
       var str = Math.round(num || 0).toString();
       var result = "";
@@ -964,7 +964,9 @@
       var buffer = [];
 
       function addStr(str) {
-        var b = encoder.encode(str);
+        // Pembersihan berlapis terhadap karakter spasi tersembunyi (\u00A0)
+        var cleanStr = str.replace(/\u00A0/g, '');
+        var b = encoder.encode(cleanStr);
         for (var i = 0; i < b.length; i++) buffer.push(b[i]);
       }
 
@@ -1020,7 +1022,7 @@
       return buffer;
     }
 
-    // --- FIX AUTO CONVERT STRUK TO JPEG IMAGE (BYPASS POPUP BLOCKER VIA IFRAME) ---
+    // --- AUTO CONVERT STRUK TO JPEG IMAGE (BYPASS POPUP BLOCKER VIA IFRAME) ---
     function renderAndPrintReceiptImage(trx, isKitchenTicket, isAdditionalTicket) {
       var container = document.getElementById('printable-area');
       container.classList.remove('hidden');
@@ -1085,7 +1087,6 @@
         var imgData = canvas.toDataURL('image/jpeg', 0.9);
         container.classList.add('hidden');
 
-        // Gunakan iframe tersembunyi agar aman dari blocker browser
         var iframe = document.createElement('iframe');
         iframe.style.position = 'fixed';
         iframe.style.right = '0';
@@ -1359,7 +1360,6 @@
       return keyStr.replace(/[\.\#\$\/\[\]]/g, '_');
     }
 
-    // --- FIX SAVE OPEN BILL (AKUMULASI TAMBAH MENU + TIKET KDS SUSULAN) ---
     async function saveOpenBill() {
       if (cart.length === 0) return alert("Keranjang masih kosong!");
       var rawTableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away_' + Date.now().toString().slice(-4);
@@ -1630,7 +1630,7 @@
             <input type="text" id="modal-cash-input" oninput="formatRupiahInput(this); calculateModalChange(${bill.total})" placeholder="Rp Nominal Tunai..." class="w-full p-2 bg-white dark:bg-gray-800 border-2 border-brand-400 rounded-lg text-xs font-extrabold">
             <div class="flex justify-between text-xs font-bold pt-1">
               <span class="text-gray-500">Kembalian:</span>
-              <span id="modal-cash-change-disp" class="text-emerald-600">Rp 0</span>
+              <span id="modal-cash-change-disp" class="text-emerald-600">Rp0</span>
             </div>
           </div>
         `;
@@ -1646,7 +1646,7 @@
     function setModalExactCash(total) {
       var input = document.getElementById('modal-cash-input');
       if (input) {
-        input.value = "Rp " + new Intl.NumberFormat('id-ID').format(total);
+        input.value = "Rp" + new Intl.NumberFormat('id-ID').format(total);
         calculateModalChange(total);
       }
     }
@@ -1672,7 +1672,6 @@
       }
     }
 
-    // --- FIX SUBMIT OPEN BILL PAYMENT (PENGHAPUSAN OPEN BILL PASTI TEREKSEKUSI) ---
     async function submitOpenBillPayment() {
       var bill = openBills[modalPayTableKey];
       if (!bill) return;
@@ -1837,7 +1836,7 @@
             <input type="text" id="cash-given-input" oninput="formatRupiahInput(this); calculateChange()" placeholder="Rp Nominal Tunai" class="w-full p-1.5 bg-white dark:bg-gray-800 border-2 border-brand-400 rounded-lg text-xs font-extrabold">
             <div class="flex justify-between text-[11px] font-bold">
               <span class="text-gray-500">Kembalian:</span>
-              <span id="cash-change-disp" class="text-emerald-600">Rp 0</span>
+              <span id="cash-change-disp" class="text-emerald-600">Rp0</span>
             </div>
           </div>
         `;
@@ -1878,7 +1877,6 @@
       }
     }
 
-    // --- FIX PROCESS CHECKOUT (HAPUS OPEN BILL JIKA ADA, BERSIH 100%) ---
     async function processCheckout() {
       if (cart.length === 0) return;
 
@@ -2596,7 +2594,7 @@
 
     function formatRupiahInput(input) {
       var value = input.value.replace(/[^0-9]/g, '');
-      input.value = value ? "Rp " + new Intl.NumberFormat('id-ID').format(parseInt(value)) : '';
+      input.value = value ? "Rp" + new Intl.NumberFormat('id-ID').format(parseInt(value)) : '';
     }
 
     function formatDateIndo(dateStr) {
