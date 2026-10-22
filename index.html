@@ -914,10 +914,10 @@
       addStr("--------------------------------\n");
 
       buffer.push(0x1B, 0x61, 0x00); // Align Left
-      addStr("No Trx : " + (trx.code || trx.table) + "\n");
+      addStr("No Trx : " + (trx.code || trx.rawTable || trx.table) + "\n");
       addStr("Tgl    : " + trx.date + " " + trx.time + "\n");
       addStr("Kasir  : " + trx.kasir + "\n");
-      addStr("Tipe   : " + (trx.orderType === 'DINE_IN' ? '[DINE IN - ' + trx.table + ']' : '[TAKE AWAY]') + "\n");
+      addStr("Tipe   : " + (trx.orderType === 'DINE_IN' ? '[DINE IN - ' + (trx.rawTable || trx.table) + ']' : '[TAKE AWAY]') + "\n");
       addStr("--------------------------------\n");
 
       var targetItems = (isKitchen && isAdditionalTicket && trx.additionalItems) ? trx.additionalItems : (trx.items || []);
@@ -967,6 +967,8 @@
                (i.itemNote ? `<tr><td colspan="2" style="font-size:9px; font-style:italic;">* Note: ${i.itemNote}</td></tr>` : '');
       }).join('');
 
+      var dispTable = trx.rawTable || trx.table;
+
       container.innerHTML = `
         <div id="receipt-image-card" style="background:#fff; color:#000; padding:12px; font-family:'Courier New', monospace; font-size:11px; width:250px; margin:0 auto; text-align:left;">
           <div style="text-align:center; font-weight:bold; margin-bottom:6px;">
@@ -979,10 +981,10 @@
           </div>
           <div style="font-size:10px; margin-bottom:4px;">
             ${isKitchenTicket ? (isAdditionalTicket ? '<strong>*** TIKET TAMBAHAN DAPUR ***</strong><br>' : '<strong>--- TIKET DAPUR ---</strong><br>') : ''}
-            No. Trx : ${trx.code || trx.table}<br>
+            No. Trx : ${trx.code || dispTable}<br>
             Tgl     : ${trx.date} ${trx.time}<br>
             Kasir   : ${trx.kasir}<br>
-            Tipe    : <strong>${trx.orderType === 'DINE_IN' ? trx.table : 'TAKE AWAY'}</strong>
+            Tipe    : <strong>${trx.orderType === 'DINE_IN' ? dispTable : 'TAKE AWAY'}</strong>
           </div>
           <div>--------------------------------</div>
           <table style="width:100%; font-size:10px; border-collapse:collapse; margin-bottom:4px;">
@@ -1256,10 +1258,11 @@
         var bill = openBills[tableKey];
         var isSelected = activeEditingTable === tableKey;
         var itemCount = bill.items ? bill.items.length : 0;
+        var dispName = bill.rawTable || tableKey;
         return `
           <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 border ${isSelected ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30' : 'border-gray-200 dark:border-gray-700'} px-3 py-1.5 rounded-xl shadow-sm">
             <button onclick="loadOpenBill('${tableKey}')" class="text-xs font-bold text-left">
-              <span class="text-amber-600 dark:text-amber-400 block"><i class="fa-solid fa-chair mr-1"></i> ${tableKey}</span>
+              <span class="text-amber-600 dark:text-amber-400 block"><i class="fa-solid fa-chair mr-1"></i> ${dispName}</span>
               <span class="text-[10px] text-gray-500">${itemCount} item (${formatRupiah(bill.total || 0)})</span>
             </button>
             <button onclick="deleteOpenBill('${tableKey}')" title="Hapus Meja Gantung" class="text-red-500 hover:text-red-700 text-xs px-1.5 py-0.5 ml-1">
@@ -1272,19 +1275,20 @@
 
     // PEMASANGAN ID FIREBASE BERSIH TANPA KARAKTER ILEGAL (. # $ [ ])
     function sanitizeFirebaseKey(keyStr) {
+      if (!keyStr) return 'meja_1';
       return keyStr.replace(/[\.\#\$\/\[\]]/g, '_');
     }
 
     async function saveOpenBill() {
       if (cart.length === 0) return alert("Keranjang masih kosong!");
       var rawTableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away_' + Date.now().toString().slice(-4);
-      var tableNum = sanitizeFirebaseKey(rawTableNum);
+      var tableKey = sanitizeFirebaseKey(rawTableNum);
 
       var totalPrice = cart.reduce(function(sum, i) { return sum + (i.price * i.qty); }, 0);
       var totalQty = cart.reduce(function(sum, i) { return sum + i.qty; }, 0);
       var noteStr = document.getElementById('order-note-input')?.value.trim() || '';
 
-      var existingBill = openBills[tableNum];
+      var existingBill = openBills[tableKey];
       var newTicket = null;
 
       if (existingBill) {
@@ -1305,7 +1309,6 @@
         });
 
         var existingTickets = existingBill.tickets || [];
-        // Jika tiket pertama berupa format lama tanpa array tickets
         if (existingTickets.length === 0 && existingBill.items) {
           existingTickets.push({
             ticketId: 'TKT_1',
@@ -1334,7 +1337,8 @@
         }
 
         var billData = {
-          table: tableNum,
+          table: tableKey,
+          rawTable: rawTableNum,
           orderType: orderType,
           items: cart, // Total akumulasi pesanan untuk kasir
           tickets: existingTickets, // Daftar tiket terpisah per pesanan untuk KDS
@@ -1347,11 +1351,12 @@
           timestamp: existingBill.timestamp || firebase.database.ServerValue.TIMESTAMP
         };
 
-        db.ref('open_bills/' + tableNum).set(billData, async function(err) {
+        db.ref('open_bills/' + tableKey).set(billData, async function(err) {
           if (!err) {
             if (newTicket && btKitchenCharacteristic) {
               var printData = {
-                table: tableNum,
+                table: tableKey,
+                rawTable: rawTableNum,
                 orderType: orderType,
                 items: newTicket.items,
                 additionalItems: newTicket.items,
@@ -1364,7 +1369,7 @@
               await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
             }
 
-            alert("Pesanan Tambahan " + tableNum + " berhasil disimpan & dikirim sebagai CARD BARU ke Dapur!");
+            alert("Pesanan Tambahan " + rawTableNum + " berhasil disimpan & dikirim sebagai CARD BARU ke Dapur!");
             cart = [];
             activeEditingTable = null;
             resetCartUIState();
@@ -1385,7 +1390,8 @@
         };
 
         var billData = {
-          table: tableNum,
+          table: tableKey,
+          rawTable: rawTableNum,
           orderType: orderType,
           items: cart,
           tickets: [initialTicket],
@@ -1398,14 +1404,14 @@
           timestamp: firebase.database.ServerValue.TIMESTAMP
         };
 
-        db.ref('open_bills/' + tableNum).set(billData, async function(err) {
+        db.ref('open_bills/' + tableKey).set(billData, async function(err) {
           if (!err) {
             if (btKitchenCharacteristic) {
               var kitchenBuf = buildESCPOSBuffer(billData, true, false);
               await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
             }
 
-            alert("Open Bill " + tableNum + " berhasil disimpan & terkirim ke KDS Dapur!");
+            alert("Open Bill " + rawTableNum + " berhasil disimpan & terkirim ke KDS Dapur!");
             cart = [];
             activeEditingTable = null;
             resetCartUIState();
@@ -1423,8 +1429,15 @@
       cart = JSON.parse(JSON.stringify(bill.items || [])); // Clone items
       orderType = bill.orderType || 'DINE_IN';
       setOrderType(orderType);
+      
+      var rawName = bill.rawTable || tableKey;
       if (orderType === 'DINE_IN') {
-        document.getElementById('select-table-num').value = bill.table;
+        var sel = document.getElementById('select-table-num');
+        if (sel) {
+          // Cari option yang sesuai
+          var foundOption = Array.from(sel.options).find(function(opt) { return opt.value === rawName || sanitizeFirebaseKey(opt.value) === tableKey; });
+          if (foundOption) sel.value = foundOption.value;
+        }
       }
       if (document.getElementById('order-note-input')) {
         document.getElementById('order-note-input').value = bill.note || '';
@@ -1432,11 +1445,11 @@
 
       // UI Switch to Edit Mode
       document.getElementById('cart-card-container').className = "lg:col-span-5 xl:col-span-4 bg-amber-50/80 dark:bg-amber-950/40 border-2 border-amber-500 rounded-2xl p-4 flex flex-col justify-between shadow-xl transition-colors";
-      document.getElementById('cart-header-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600"></i> Edit Open Bill: ${tableKey}`;
+      document.getElementById('cart-header-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600"></i> Edit Open Bill: ${rawName}`;
       document.getElementById('active-bill-indicator').classList.remove('hidden');
-      document.getElementById('lbl-editing-table').innerText = tableKey;
+      document.getElementById('lbl-editing-table').innerText = rawName;
       document.getElementById('btn-save-openbill').innerText = "Simpan Perubahan Bill";
-      document.getElementById('payment-section-box').classList.add('hidden');
+      document.getElementById('payment-section-box').classList.remove('hidden'); // Tetap izinkan kasir memilih pembayaran langsung
 
       renderCart();
       renderOpenBillsBar();
@@ -1461,7 +1474,8 @@
     }
 
     function deleteOpenBill(tableKey) {
-      if (confirm("Hapus data Open Bill " + tableKey + "?")) {
+      var rawName = (openBills[tableKey] && openBills[tableKey].rawTable) ? openBills[tableKey].rawTable : tableKey;
+      if (confirm("Hapus data Open Bill " + rawName + "?")) {
         db.ref('open_bills/' + tableKey).remove(function(err) {
           if (!err) {
             if (activeEditingTable === tableKey) cancelOpenBillEditMode();
@@ -1619,7 +1633,7 @@
       }
     }
 
-    // --- PROCESS CHECKOUT (DENGAN DUKUNGAN OPEN BILL & TAMBAHAN ITEM) ---
+    // --- PROCESS CHECKOUT (DENGAN DUKUNGAN PELUNASAN OPEN BILL) ---
     async function processCheckout() {
       if (cart.length === 0) return;
 
@@ -1628,7 +1642,9 @@
       var timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
       var dateStr = shiftInfo.date;
       var noteStr = document.getElementById('order-note-input')?.value.trim() || '';
-      var tableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away';
+
+      var rawTableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away';
+      var tableKey = sanitizeFirebaseKey(rawTableNum);
 
       var totalPrice = cart.reduce(function(sum, i) { return sum + (i.price * i.qty); }, 0);
       var given = totalPrice;
@@ -1647,7 +1663,8 @@
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         kasir: shiftInfo.kasirName,
         orderType: orderType,
-        table: tableNum,
+        table: tableKey,
+        rawTable: rawTableNum,
         items: cart,
         note: noteStr,
         total: totalPrice,
@@ -1658,13 +1675,18 @@
         kitchenStatus: 'SELESAI'
       };
 
-      // Jika sedang edit open bill, hapus open bill tersebut dari Firebase karena sudah dibayar lunas
-      if (activeEditingTable) {
-        db.ref('open_bills/' + activeEditingTable).remove();
-      }
+      // Tentukan key open bill yang akan dihapus dari firebase (activeEditingTable / tableKey)
+      var targetDeleteKey = activeEditingTable || tableKey;
 
       db.ref('transactions/' + trxCode).set(transactionData, async function(err) {
         if (!err) {
+          // Hapus open bill jika transaksi berupa Dine In/Open Bill yang sudah dilunasi
+          if (targetDeleteKey && openBills[targetDeleteKey]) {
+            db.ref('open_bills/' + targetDeleteKey).remove();
+          } else if (openBills[tableKey]) {
+            db.ref('open_bills/' + tableKey).remove();
+          }
+
           if (btKasirCharacteristic) {
             var kasirBuf = buildESCPOSBuffer(transactionData, false, false);
             await sendESCPOSToPrinter(btKasirCharacteristic, kasirBuf);
@@ -1880,12 +1902,13 @@
 
       tbody.innerHTML = filtered.slice().reverse().map(function(t) {
         var itemsStr = (t.items || []).map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
+        var dispName = t.rawTable || t.table;
         return `
           <tr class="${t.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400 line-through' : ''}">
             <td class="p-2.5">${t.date} ${t.time}</td>
             <td class="p-2.5 font-bold font-mono text-brand-600">${t.code}</td>
             <td class="p-2.5">${t.kasir}</td>
-            <td class="p-2.5 font-bold">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
+            <td class="p-2.5 font-bold">${t.orderType === 'DINE_IN' ? dispName : 'Take Away'}</td>
             <td class="p-2.5">${itemsStr} ${t.note ? '<br><span class="text-yellow-600 font-bold">[Global Note: ' + t.note + ']</span>' : ''}</td>
             <td class="p-2.5 font-extrabold">${formatRupiah(t.total)}</td>
             <td class="p-2.5 uppercase font-semibold">${t.paymentMethod}</td>
@@ -2021,12 +2044,13 @@
       tbody.innerHTML = todayTrx.map(function(t) {
         var itemsStr = (t.items || []).map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
         var isCancelled = t.status === 'CANCELLED';
+        var dispName = t.rawTable || t.table;
 
         return `
           <tr class="${isCancelled ? 'bg-red-500/10 text-red-400 line-through' : ''}">
             <td class="p-2 font-bold">${t.code}</td>
             <td class="p-2">${t.time}</td>
-            <td class="p-2 font-bold text-brand-600">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
+            <td class="p-2 font-bold text-brand-600">${t.orderType === 'DINE_IN' ? dispName : 'Take Away'}</td>
             <td class="p-2">${itemsStr}</td>
             <td class="p-2 font-bold">${formatRupiah(t.total)}</td>
             <td class="p-2 uppercase">${t.paymentMethod}</td>
@@ -2054,6 +2078,7 @@
           key: t.code,
           code: t.code,
           table: t.table,
+          rawTable: t.rawTable || t.table,
           orderType: t.orderType,
           kasir: t.kasir,
           date: t.date,
@@ -2070,17 +2095,20 @@
 
       // Ambil seluruh TIKET dari OPEN BILLS aktif secara terpisah (Memisah Card Per Tiket)
       var openBillTickets = [];
-      Object.values(openBills).forEach(function(bill) {
-        if (bill.date === targetDate) {
+      Object.keys(openBills).forEach(function(tableKey) {
+        var bill = openBills[tableKey];
+        if (bill && bill.date === targetDate) {
           var tickets = bill.tickets;
+          var dispName = bill.rawTable || tableKey;
           if (tickets && Array.isArray(tickets) && tickets.length > 0) {
             tickets.forEach(function(t) {
               openBillTickets.push({
-                key: bill.table + '_' + t.ticketId,
-                tableKey: bill.table,
+                key: tableKey + '_' + t.ticketId,
+                tableKey: tableKey,
                 ticketId: t.ticketId,
                 code: null,
-                table: bill.table,
+                table: tableKey,
+                rawTable: dispName,
                 orderType: bill.orderType,
                 kasir: bill.kasir,
                 date: bill.date,
@@ -2097,11 +2125,12 @@
           } else {
             // Fallback format lama jika belum ada tickets
             openBillTickets.push({
-              key: bill.table,
-              tableKey: bill.table,
+              key: tableKey,
+              tableKey: tableKey,
               ticketId: 'main',
               code: null,
-              table: bill.table,
+              table: tableKey,
+              rawTable: dispName,
               orderType: bill.orderType,
               kasir: bill.kasir,
               date: bill.date,
@@ -2128,7 +2157,7 @@
       } else {
         grid.innerHTML = activeOrders.map(function(t) {
           var isDineIn = t.orderType === 'DINE_IN';
-          var tableText = isDineIn ? t.table : 'TAKE AWAY';
+          var tableText = isDineIn ? (t.rawTable || t.table) : 'TAKE AWAY';
 
           var itemsList = (t.items || []).map(function(i) {
             return `<li class="flex justify-between border-b border-gray-50 dark:border-gray-700/30 pb-1"><span>${i.name} ${i.itemNote ? '<span class="text-orange-500 font-bold">[' + i.itemNote + ']</span>' : ''}</span><span class="text-brand-600 font-extrabold text-sm ml-2">x${i.qty}</span></li>`;
@@ -2147,7 +2176,7 @@
                 <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
                   <div>
                     <div class="flex items-center gap-1.5 flex-wrap">
-                      <span class="font-bold text-sm text-brand-600 block">${t.code || t.table}</span>
+                      <span class="font-bold text-sm text-brand-600 block">${t.code || t.rawTable || t.table}</span>
                       ${t.isOpenBill && !t.isAdditional ? '<span class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-amber-500 text-white animate-pulse">OPEN BILL</span>' : ''}
                     </div>
                     <span class="text-xs font-black px-2 py-0.5 rounded-md ${isDineIn ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">
@@ -2179,11 +2208,12 @@
 
       tbody.innerHTML = activeOrders.map(function(t) {
         var itemsStr = (t.items || []).map(function(i) { return i.name + ' (x' + i.qty + ')' + (i.itemNote ? ' [' + i.itemNote + ']' : ''); }).join(', ');
+        var dispName = t.rawTable || t.table;
         return `
           <tr>
             <td class="p-2.5">${t.time}</td>
-            <td class="p-2.5 font-bold">${t.code || (t.table + (t.isAdditional ? ' [TAMBAHAN #' + t.ticketNum + ']' : ' [OPEN BILL]'))}</td>
-            <td class="p-2.5 font-bold text-brand-600">${t.orderType === 'DINE_IN' ? t.table : 'Take Away'}</td>
+            <td class="p-2.5 font-bold">${t.code || (dispName + (t.isAdditional ? ' [TAMBAHAN #' + t.ticketNum + ']' : ' [OPEN BILL]'))}</td>
+            <td class="p-2.5 font-bold text-brand-600">${t.orderType === 'DINE_IN' ? dispName : 'Take Away'}</td>
             <td class="p-2.5">${itemsStr} ${t.note ? '<strong class="text-yellow-600 font-bold block">[Catatan: ' + t.note + ']</strong>' : ''}</td>
             <td class="p-2.5 font-bold ${t.kitchenStatus === 'SELESAI' ? 'text-emerald-500' : 'text-yellow-500'}">${t.kitchenStatus || 'PROSES'}</td>
             <td class="p-2.5 text-center">
@@ -2223,6 +2253,7 @@
         var targetTicket = (bill.tickets || []).find(function(t) { return t.ticketId === ticketId; });
         var printData = {
           table: bill.table,
+          rawTable: bill.rawTable || bill.table,
           orderType: bill.orderType,
           items: targetTicket ? targetTicket.items : bill.items,
           additionalItems: targetTicket ? targetTicket.items : bill.items,
@@ -2277,7 +2308,7 @@
         (t.items || []).forEach(function(item) {
           excelRows.push({
             "Tanggal": t.date, "Waktu": t.time, "Kode Transaksi": t.code, "Kasir": t.kasir,
-            "Tipe": t.orderType, "Meja": t.table || '-', "Nama Menu": item.name, "Catatan Item": item.itemNote || '-',
+            "Tipe": t.orderType, "Meja": t.rawTable || t.table || '-', "Nama Menu": item.name, "Catatan Item": item.itemNote || '-',
             "Harga": item.price, "Qty": item.qty, "Subtotal": item.price * item.qty,
             "Metode": t.paymentMethod, "Catatan Global": t.note || '-', "Status": t.status
           });
