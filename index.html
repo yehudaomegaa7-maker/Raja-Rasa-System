@@ -14,7 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <!-- XLSX Library untuk Export Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- html2canvas untuk Auto Convert Struk ke Gambar (Bypass PDF Blank & iWare) -->
+  <!-- html2canvas untuk Auto Convert Struk ke Gambar (Bypass PDF Blank) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Firebase Compatibility SDKs -->
@@ -173,10 +173,10 @@
         </div>
         <div id="active-bill-indicator" class="hidden flex items-center gap-2">
           <span class="text-xs px-3 py-1 rounded-lg bg-amber-100 text-amber-800 font-bold border border-amber-300 animate-pulse">
-            <i class="fa-solid fa-pen-to-square"></i> Mode Edit: <span id="lbl-editing-table">Meja 1</span>
+            <i class="fa-solid fa-pen-to-square"></i> Edit Open Bill: <span id="lbl-editing-table">Meja 1</span>
           </span>
           <button onclick="cancelOpenBillEditMode()" class="text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-800 dark:text-white font-bold px-3 py-1.5 rounded-lg shadow">
-            Kembali ke Trx Baru
+            Batal / Trx Baru
           </button>
         </div>
       </div>
@@ -259,7 +259,7 @@
               </div>
             </div>
 
-            <!-- Payment Methods -->
+            <!-- Payment Methods (Untuk Transaksi Langsung / Take Away) -->
             <div id="payment-section-box">
               <label class="block text-[10px] font-semibold text-gray-500 mb-1">Metode Pembayaran:</label>
               <div class="grid grid-cols-3 gap-1.5" id="payment-buttons-grid">
@@ -278,11 +278,11 @@
             <div id="payment-input-area" class="space-y-1 pt-0.5 min-h-[60px]"></div>
 
             <div id="action-buttons-box" class="grid grid-cols-2 gap-2">
-              <button onclick="saveOpenBill()" id="btn-save-openbill" class="py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow transition text-xs flex items-center justify-center gap-1.5">
+              <button onclick="saveOpenBill()" id="btn-save-openbill" class="py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow transition text-xs flex items-center justify-center gap-1.5 col-span-1">
                 <i class="fa-solid fa-bookmark"></i> Simpan Open Bill
               </button>
-              <button onclick="processCheckout()" id="btn-process-checkout" disabled class="py-2.5 bg-brand-600 hover:bg-brand-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold rounded-xl shadow-lg transition text-xs flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-check-circle"></i> Bayar & Print
+              <button onclick="processCheckout()" id="btn-process-checkout" disabled class="py-2.5 bg-brand-600 hover:bg-brand-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold rounded-xl shadow-lg transition text-xs flex items-center justify-center gap-1.5 col-span-1">
+                <i class="fa-solid fa-check-circle"></i> Bayar Direct
               </button>
             </div>
           </div>
@@ -447,7 +447,7 @@
         <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl shadow-sm space-y-4">
           <div class="flex flex-wrap items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3 gap-2">
             <div>
-              <h3 class="font-bold text-gray-800 dark:text-gray-200 text-sm"><i class="fa-solid fa-box-archive text-brand-500"></i> Arsip Struk Transaksi Real-time</h3>
+              <h3 class="font-bold text-gray-800 dark:text-gray-200 text-sm"><i class="fa-solid fa-box-archive text-brand-500"></i> Arsip Struk Transaksi Real-time (JPEG)</h3>
               <p class="text-xs text-gray-400">Pencarian esai serbaguna untuk seluruh riwayat struk belanja pelanggan</p>
             </div>
           </div>
@@ -481,7 +481,7 @@
                   <th class="p-2.5">Rincian Menu & Catatan</th>
                   <th class="p-2.5">Total Belanja</th>
                   <th class="p-2.5">Metode</th>
-                  <th class="p-2.5 text-center">Aksi Struk</th>
+                  <th class="p-2.5 text-center">Aksi Struk JPEG</th>
                 </tr>
               </thead>
               <tbody id="arsip-struk-tbody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
@@ -547,6 +547,56 @@
   </main>
 
   <!-- ==================== MODALS ==================== -->
+
+  <!-- MODAL KHUSUS PELUNASAN OPEN BILL -->
+  <div id="modal-pay-openbill" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3">
+        <h3 class="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-cash-register text-brand-500"></i> Pelunasan <span id="pay-modal-tablename" class="text-brand-600">Meja 1</span>
+        </h3>
+        <button onclick="closePayOpenBillModal()" class="text-gray-400 hover:text-gray-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Ringkasan Akumulasi Menu -->
+      <div class="bg-gray-50 dark:bg-gray-900/60 p-3 rounded-xl max-h-40 overflow-y-auto space-y-1 text-xs" id="pay-modal-items-list">
+        <!-- Dynamic Items list -->
+      </div>
+
+      <div class="flex justify-between items-center text-sm font-bold pt-1 border-t border-gray-200 dark:border-gray-700">
+        <span class="text-gray-600 dark:text-gray-300">Total Tagihan Lunas:</span>
+        <span id="pay-modal-total-price" class="text-brand-600 dark:text-brand-400 text-lg">Rp 0</span>
+      </div>
+
+      <!-- Pilihan Metode Bayar -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1">Pilih Metode Pembayaran Real:</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="selectModalPayMethod('cash')" id="m-pay-cash" class="py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-center">
+            <i class="fa-solid fa-money-bill-wave text-emerald-500 block"></i> Cash
+          </button>
+          <button type="button" onclick="selectModalPayMethod('qris')" id="m-pay-qris" class="py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-center">
+            <i class="fa-solid fa-qrcode text-yellow-500 block"></i> QR Mandiri
+          </button>
+          <button type="button" onclick="selectModalPayMethod('transfer')" id="m-pay-transfer" class="py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-center">
+            <i class="fa-solid fa-building-columns text-blue-500 block"></i> Trf Mandiri
+          </button>
+        </div>
+      </div>
+
+      <!-- Area Input Tunai & Kembalian -->
+      <div id="modal-pay-input-area" class="space-y-2 min-h-[50px]"></div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closePayOpenBillModal()" class="w-1/3 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold">Batal</button>
+        <button onclick="submitOpenBillPayment()" id="btn-submit-openbill-pay" disabled class="w-2/3 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold rounded-xl text-xs shadow-lg flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-check-circle"></i> Selesaikan & Cetak Struk
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- PIN Access Modal -->
   <div id="modal-pin" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
@@ -700,8 +750,8 @@
     var categoriesList = [];
     var cart = [];
     var transactions = [];
-    var openBills = {}; // Meja gantung yang aktif
-    var activeEditingTable = null; // null = Trx Baru, string (misal: "Meja 1") = Edit Open Bill
+    var openBills = {}; 
+    var activeEditingTable = null; 
     var activeCategory = "SEMUA";
     var activeKamarTab = "SEMUA";
     var selectedPayment = "";
@@ -709,9 +759,13 @@
     var pendingPINRoom = null;
     var orderType = "DINE_IN";
     var voiceEnabled = true;
-    var kitchenSelectedDate = new Date().toISOString().split('T')[0]; // State Tanggal Khusus Kitchen
+    var kitchenSelectedDate = new Date().toISOString().split('T')[0]; 
 
-    // Shift Info Persistent (Realtime Firebase /active_shift)
+    // State Khusus Modal Pelunasan Open Bill
+    var modalPayTableKey = null;
+    var modalPaySelectedMethod = "";
+
+    // Shift Info Persistent
     var shiftInfo = {
       active: false,
       kasirName: "Kasir Utama",
@@ -777,14 +831,13 @@
       });
     }
 
-    // Helper Aman Pembacaan Firebase Snapshot (Object -> Array)
     function parseFirebaseArray(data) {
       if (!data) return [];
       if (Array.isArray(data)) return data.filter(Boolean);
       return Object.keys(data).map(function(k) { return data[k]; }).filter(Boolean);
     }
 
-    // --- FIREBASE SYNC (MULTI-DEVICE REALTIME) ---
+    // --- FIREBASE SYNC ---
     function initFirebaseRealtimeSync() {
       db.ref('categories').on('value', function(snapshot) {
         var val = snapshot.val();
@@ -841,7 +894,7 @@
       });
     }
 
-    // --- BLUETOOTH DUAL DIRECT PRINT ESC/POS ---
+    // --- BLUETOOTH ESC/POS (CLEAN ASCII FORMATTING) ---
     async function connectBTPrinter(target) {
       try {
         var device = await navigator.bluetooth.requestDevice({
@@ -894,6 +947,18 @@
       }
     }
 
+    function formatRupiahASCII(num) {
+      var str = Math.round(num || 0).toString();
+      var result = "";
+      var count = 0;
+      for (var i = str.length - 1; i >= 0; i--) {
+        count++;
+        result = str.charAt(i) + result;
+        if (count % 3 === 0 && i !== 0) result = "." + result;
+      }
+      return "Rp" + result;
+    }
+
     function buildESCPOSBuffer(trx, isKitchen, isAdditionalTicket) {
       var encoder = new TextEncoder();
       var buffer = [];
@@ -914,18 +979,19 @@
       addStr("--------------------------------\n");
 
       buffer.push(0x1B, 0x61, 0x00); // Align Left
-      addStr("No Trx : " + (trx.code || trx.rawTable || trx.table) + "\n");
+      var dispTable = trx.rawTable || trx.table;
+      addStr("No Trx : " + (trx.code || dispTable) + "\n");
       addStr("Tgl    : " + trx.date + " " + trx.time + "\n");
       addStr("Kasir  : " + trx.kasir + "\n");
-      addStr("Tipe   : " + (trx.orderType === 'DINE_IN' ? '[DINE IN - ' + (trx.rawTable || trx.table) + ']' : '[TAKE AWAY]') + "\n");
+      addStr("Tipe   : " + (trx.orderType === 'DINE_IN' ? '[DINE IN - ' + dispTable + ']' : '[TAKE AWAY]') + "\n");
       addStr("--------------------------------\n");
 
       var targetItems = (isKitchen && isAdditionalTicket && trx.additionalItems) ? trx.additionalItems : (trx.items || []);
 
       targetItems.forEach(function(item) {
         addStr(item.name + "\n");
-        var linePrice = item.qty + " x " + formatRupiah(item.price);
-        var sub = formatRupiah(item.price * item.qty);
+        var linePrice = item.qty + " x " + formatRupiahASCII(item.price);
+        var sub = formatRupiahASCII(item.price * item.qty);
         if (!isKitchen) {
           addStr(linePrice + " = " + sub + "\n");
         } else {
@@ -940,10 +1006,10 @@
 
       if (!isKitchen) {
         addStr("--------------------------------\n");
-        addStr("TOTAL   : " + formatRupiah(trx.total) + "\n");
-        addStr("METODE  : " + (trx.paymentMethod ? trx.paymentMethod.toUpperCase() : 'OPEN BILL') + "\n");
-        if (trx.cashGiven) addStr("BAYAR   : " + formatRupiah(trx.cashGiven) + "\n");
-        if (trx.cashChange) addStr("KEMBALI : " + formatRupiah(trx.cashChange) + "\n");
+        addStr("TOTAL   : " + formatRupiahASCII(trx.total) + "\n");
+        addStr("METODE  : " + (trx.paymentMethod ? trx.paymentMethod.toUpperCase() : 'CASH') + "\n");
+        if (trx.cashGiven) addStr("BAYAR   : " + formatRupiahASCII(trx.cashGiven) + "\n");
+        if (trx.cashChange) addStr("KEMBALI : " + formatRupiahASCII(trx.cashChange) + "\n");
         addStr("--------------------------------\n");
         buffer.push(0x1B, 0x61, 0x01);
         addStr("Terima Kasih Atas Kunjungan Anda!\n\n\n\n");
@@ -954,7 +1020,7 @@
       return buffer;
     }
 
-    // --- AUTO CONVERT TO IMAGE WITH EMBEDDED BASE64 LOGO ---
+    // --- FIX AUTO CONVERT STRUK TO JPEG IMAGE (BYPASS POPUP BLOCKER VIA IFRAME) ---
     function renderAndPrintReceiptImage(trx, isKitchenTicket, isAdditionalTicket) {
       var container = document.getElementById('printable-area');
       container.classList.remove('hidden');
@@ -963,8 +1029,8 @@
 
       var itemsHTML = targetItems.map(function(i) {
         return `<tr><td colspan="2" style="font-weight:bold; padding-top:4px;">${i.name}</td></tr>` +
-               `<tr><td>${i.qty} x ${formatRupiah(i.price)}</td><td style="text-align:right;">${formatRupiah(i.price * i.qty)}</td></tr>` +
-               (i.itemNote ? `<tr><td colspan="2" style="font-size:9px; font-style:italic;">* Note: ${i.itemNote}</td></tr>` : '');
+               `<tr><td>${i.qty} x ${formatRupiahASCII(i.price)}</td><td style="text-align:right;">${formatRupiahASCII(i.price * i.qty)}</td></tr>` +
+               (i.itemNote ? `<tr><td colspan="2" style="font-size:9px; font-style:italic; color:#ea580c;">* Note: ${i.itemNote}</td></tr>` : '');
       }).join('');
 
       var dispTable = trx.rawTable || trx.table;
@@ -995,14 +1061,14 @@
           ${!isKitchenTicket ? `
             <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:12px;">
               <span>TOTAL:</span>
-              <span>${formatRupiah(trx.total)}</span>
+              <span>${formatRupiahASCII(trx.total)}</span>
             </div>
             <div style="display:flex; justify-content:space-between; font-size:9px;">
               <span>Metode:</span>
-              <span>${trx.paymentMethod ? trx.paymentMethod.toUpperCase() : 'OPEN BILL'}</span>
+              <span>${trx.paymentMethod ? trx.paymentMethod.toUpperCase() : 'CASH'}</span>
             </div>
-            ${trx.cashGiven ? `<div style="display:flex; justify-content:space-between; font-size:9px;"><span>Bayar:</span><span>${formatRupiah(trx.cashGiven)}</span></div>` : ''}
-            ${trx.cashChange ? `<div style="display:flex; justify-content:space-between; font-size:9px;"><span>Kembali:</span><span>${formatRupiah(trx.cashChange)}</span></div>` : ''}
+            ${trx.cashGiven ? `<div style="display:flex; justify-content:space-between; font-size:9px;"><span>Bayar:</span><span>${formatRupiahASCII(trx.cashGiven)}</span></div>` : ''}
+            ${trx.cashChange ? `<div style="display:flex; justify-content:space-between; font-size:9px;"><span>Kembali:</span><span>${formatRupiahASCII(trx.cashChange)}</span></div>` : ''}
             <div>--------------------------------</div>
             <div style="text-align:center; font-size:9px; margin-top:8px; font-weight:bold;">
               Terima Kasih Atas Kunjungan Anda!
@@ -1016,15 +1082,27 @@
       `;
 
       html2canvas(document.getElementById('receipt-image-card'), { scale: 2 }).then(function(canvas) {
-        var imgData = canvas.toDataURL('image/png');
+        var imgData = canvas.toDataURL('image/jpeg', 0.9);
         container.classList.add('hidden');
 
-        var win = window.open();
-        if (win) {
-          win.document.write('<img src="' + imgData + '" style="width:100%; max-width:280px;" onload="window.print();window.close();"/>');
-        } else {
-          window.print();
-        }
+        // Gunakan iframe tersembunyi agar aman dari blocker browser
+        var iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+
+        var doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write('<html><head><title>Print Struk</title><style>@page{size:58mm auto;margin:0;} body{margin:0;padding:0;text-align:center;}</style></head><body><img src="' + imgData + '" style="width:100%;max-width:280px;" onload="window.print();"/></body></html>');
+        doc.close();
+
+        setTimeout(function() {
+          document.body.removeChild(iframe);
+        }, 3000);
       });
     }
 
@@ -1091,10 +1169,10 @@
       document.getElementById('screen-landing').classList.remove('hidden');
     }
 
-    // --- SHIFT MANAGEMENT (FIREBASE REALTIME SYNC) ---
+    // --- SHIFT MANAGEMENT ---
     function openMandatoryShiftModal() {
       document.getElementById('open-shift-kasir-name').value = shiftInfo.kasirName || "Kasir Utama";
-      document.getElementById('open-shift-modal-awal').value = formatRupiah(shiftInfo.modalAwal || 100000);
+      document.getElementById('open-shift-modal-awal').value = formatRupiahASCII(shiftInfo.modalAwal || 100000);
       document.getElementById('modal-open-shift').classList.remove('hidden');
     }
 
@@ -1121,7 +1199,7 @@
 
     function updateShiftBannerUI() {
       document.getElementById('disp-kasir-name').innerText = shiftInfo.kasirName;
-      document.getElementById('disp-modal-awal').innerText = formatRupiah(shiftInfo.modalAwal);
+      document.getElementById('disp-modal-awal').innerText = formatRupiahASCII(shiftInfo.modalAwal);
       document.getElementById('disp-real-date').innerText = formatDateIndo(shiftInfo.date);
     }
 
@@ -1153,10 +1231,10 @@
       var confirmMsg = "=== REKONSILIASI TUTUP SHIFT ===\n" +
                        "Kasir: " + shiftInfo.kasirName + "\n" +
                        "Tanggal: " + shiftInfo.date + "\n" +
-                       "Modal Awal: " + formatRupiah(shiftInfo.modalAwal) + "\n" +
-                       "Penjualan Tunai: " + formatRupiah(totalCashSales) + "\n" +
+                       "Modal Awal: " + formatRupiahASCII(shiftInfo.modalAwal) + "\n" +
+                       "Penjualan Tunai: " + formatRupiahASCII(totalCashSales) + "\n" +
                        "-----------------------------------\n" +
-                       "TOTAL TUNAI LACI KASIR: " + formatRupiah(totalLaci) + "\n\n" +
+                       "TOTAL TUNAI LACI KASIR: " + formatRupiahASCII(totalLaci) + "\n\n" +
                        "Yakin ingin Tutup Shift sekarang?";
 
       if (confirm(confirmMsg)) {
@@ -1220,7 +1298,7 @@
               <p class="text-[9px] text-gray-400">Kode: ${item.code}</p>
             </div>
             <div class="mt-3 flex items-center justify-between border-t border-gray-100 dark:border-gray-700/50 pt-2">
-              <span class="font-extrabold text-xs text-brand-600 dark:text-brand-500">${formatRupiah(item.price)}</span>
+              <span class="font-extrabold text-xs text-brand-600 dark:text-brand-500">${formatRupiahASCII(item.price)}</span>
               <span class="w-5 h-5 rounded-full bg-brand-100 text-brand-600 group-hover:bg-brand-500 group-hover:text-white flex items-center justify-center text-[10px] transition"><i class="fa-solid fa-plus"></i></span>
             </div>
           </div>
@@ -1244,7 +1322,7 @@
       renderMenuCatalog();
     }
 
-    // --- OPEN BILLS (TRANSAKSI GANTUNG) SYSTEM WITH REALTIME KITCHEN SYNC ---
+    // --- OPEN BILLS TABS BAR & MODAL PELUNASAN ---
     function renderOpenBillsBar() {
       var bar = document.getElementById('open-bills-bar');
       var keys = Object.keys(openBills);
@@ -1260,12 +1338,15 @@
         var itemCount = bill.items ? bill.items.length : 0;
         var dispName = bill.rawTable || tableKey;
         return `
-          <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 border ${isSelected ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30' : 'border-gray-200 dark:border-gray-700'} px-3 py-1.5 rounded-xl shadow-sm">
+          <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-900 border ${isSelected ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30' : 'border-gray-200 dark:border-gray-700'} px-2.5 py-1 rounded-xl shadow-sm">
             <button onclick="loadOpenBill('${tableKey}')" class="text-xs font-bold text-left">
               <span class="text-amber-600 dark:text-amber-400 block"><i class="fa-solid fa-chair mr-1"></i> ${dispName}</span>
-              <span class="text-[10px] text-gray-500">${itemCount} item (${formatRupiah(bill.total || 0)})</span>
+              <span class="text-[10px] text-gray-500">${itemCount} item (${formatRupiahASCII(bill.total || 0)})</span>
             </button>
-            <button onclick="deleteOpenBill('${tableKey}')" title="Hapus Meja Gantung" class="text-red-500 hover:text-red-700 text-xs px-1.5 py-0.5 ml-1">
+            <button onclick="openPayOpenBillModal('${tableKey}')" title="Bayar / Pelunasan" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-0.5 rounded-lg shadow ml-1">
+              <i class="fa-solid fa-cash-register mr-0.5"></i> Bayar
+            </button>
+            <button onclick="deleteOpenBill('${tableKey}')" title="Hapus Meja Gantung" class="text-red-500 hover:text-red-700 text-xs px-1">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
@@ -1273,12 +1354,12 @@
       }).join('');
     }
 
-    // PEMASANGAN ID FIREBASE BERSIH TANPA KARAKTER ILEGAL (. # $ [ ])
     function sanitizeFirebaseKey(keyStr) {
       if (!keyStr) return 'meja_1';
       return keyStr.replace(/[\.\#\$\/\[\]]/g, '_');
     }
 
+    // --- FIX SAVE OPEN BILL (AKUMULASI TAMBAH MENU + TIKET KDS SUSULAN) ---
     async function saveOpenBill() {
       if (cart.length === 0) return alert("Keranjang masih kosong!");
       var rawTableNum = (orderType === 'DINE_IN') ? document.getElementById('select-table-num').value : 'Take Away_' + Date.now().toString().slice(-4);
@@ -1292,7 +1373,6 @@
       var newTicket = null;
 
       if (existingBill) {
-        // OPEN BILL SUDAH ADA (TAMBAHAN PESANAN)
         var existingItems = existingBill.items || [];
         var additionalItems = [];
 
@@ -1340,8 +1420,8 @@
           table: tableKey,
           rawTable: rawTableNum,
           orderType: orderType,
-          items: cart, // Total akumulasi pesanan untuk kasir
-          tickets: existingTickets, // Daftar tiket terpisah per pesanan untuk KDS
+          items: cart,
+          tickets: existingTickets,
           total: totalPrice,
           totalQty: totalQty,
           note: noteStr,
@@ -1369,7 +1449,7 @@
               await sendESCPOSToPrinter(btKitchenCharacteristic, kitchenBuf);
             }
 
-            alert("Pesanan Tambahan " + rawTableNum + " berhasil disimpan & dikirim sebagai CARD BARU ke Dapur!");
+            alert("Pesanan Tambahan " + rawTableNum + " berhasil disimpan & dikirim ke KDS Dapur!");
             cart = [];
             activeEditingTable = null;
             resetCartUIState();
@@ -1378,7 +1458,6 @@
         });
 
       } else {
-        // OPEN BILL BARU (PERTAMA KALI)
         var initialTicket = {
           ticketId: 'TKT_' + Date.now(),
           ticketNum: 1,
@@ -1426,7 +1505,7 @@
       if (!bill) return;
 
       activeEditingTable = tableKey;
-      cart = JSON.parse(JSON.stringify(bill.items || [])); // Clone items
+      cart = JSON.parse(JSON.stringify(bill.items || [])); 
       orderType = bill.orderType || 'DINE_IN';
       setOrderType(orderType);
       
@@ -1434,7 +1513,6 @@
       if (orderType === 'DINE_IN') {
         var sel = document.getElementById('select-table-num');
         if (sel) {
-          // Cari option yang sesuai
           var foundOption = Array.from(sel.options).find(function(opt) { return opt.value === rawName || sanitizeFirebaseKey(opt.value) === tableKey; });
           if (foundOption) sel.value = foundOption.value;
         }
@@ -1443,13 +1521,12 @@
         document.getElementById('order-note-input').value = bill.note || '';
       }
 
-      // UI Switch to Edit Mode
       document.getElementById('cart-card-container').className = "lg:col-span-5 xl:col-span-4 bg-amber-50/80 dark:bg-amber-950/40 border-2 border-amber-500 rounded-2xl p-4 flex flex-col justify-between shadow-xl transition-colors";
       document.getElementById('cart-header-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600"></i> Edit Open Bill: ${rawName}`;
       document.getElementById('active-bill-indicator').classList.remove('hidden');
       document.getElementById('lbl-editing-table').innerText = rawName;
       document.getElementById('btn-save-openbill').innerText = "Simpan Perubahan Bill";
-      document.getElementById('payment-section-box').classList.remove('hidden'); // Tetap izinkan kasir memilih pembayaran langsung
+      document.getElementById('payment-section-box').classList.add('hidden');
 
       renderCart();
       renderOpenBillsBar();
@@ -1483,6 +1560,174 @@
           }
         });
       }
+    }
+
+    // --- MODAL PELUNASAN OPEN BILL ---
+    function openPayOpenBillModal(tableKey) {
+      var bill = openBills[tableKey];
+      if (!bill) return;
+
+      modalPayTableKey = tableKey;
+      modalPaySelectedMethod = "";
+
+      var rawName = bill.rawTable || tableKey;
+      document.getElementById('pay-modal-tablename').innerText = rawName;
+
+      var itemsContainer = document.getElementById('pay-modal-items-list');
+      itemsContainer.innerHTML = (bill.items || []).map(function(i) {
+        return `
+          <div class="flex justify-between items-center py-1 border-b border-gray-200 dark:border-gray-700">
+            <div>
+              <span class="font-bold text-gray-800 dark:text-gray-200">${i.name}</span>
+              ${i.itemNote ? '<span class="text-orange-500 block text-[10px]">* ' + i.itemNote + '</span>' : ''}
+            </div>
+            <div class="text-right">
+              <span class="text-gray-500">${i.qty} x ${formatRupiahASCII(i.price)}</span> = 
+              <strong class="text-brand-600">${formatRupiahASCII(i.price * i.qty)}</strong>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('pay-modal-total-price').innerText = formatRupiahASCII(bill.total || 0);
+      
+      resetModalPayButtons();
+      document.getElementById('modal-pay-input-area').innerHTML = "";
+      document.getElementById('btn-submit-openbill-pay').disabled = true;
+
+      document.getElementById('modal-pay-openbill').classList.remove('hidden');
+    }
+
+    function closePayOpenBillModal() {
+      document.getElementById('modal-pay-openbill').classList.add('hidden');
+      modalPayTableKey = null;
+    }
+
+    function resetModalPayButtons() {
+      ['cash', 'qris', 'transfer'].forEach(function(m) {
+        var btn = document.getElementById('m-pay-' + m);
+        if (btn) btn.className = "py-2 text-xs font-bold rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-center opacity-100 scale-100 transition-all";
+      });
+    }
+
+    function selectModalPayMethod(method) {
+      modalPaySelectedMethod = method;
+      var bill = openBills[modalPayTableKey];
+      if (!bill) return;
+
+      resetModalPayButtons();
+      var activeBtn = document.getElementById('m-pay-' + method);
+      if (activeBtn) activeBtn.className = "py-2 text-xs font-extrabold rounded-xl border-2 border-brand-500 bg-white text-gray-900 shadow-md text-center transition-all scale-105";
+
+      var area = document.getElementById('modal-pay-input-area');
+      if (method === 'cash') {
+        area.innerHTML = `
+          <div class="space-y-1.5 bg-brand-50/50 dark:bg-gray-900/60 p-2.5 rounded-xl border border-brand-200">
+            <div class="flex justify-between items-center">
+              <label class="text-[11px] font-bold text-gray-700 dark:text-gray-300">Nominal Tunai Diterima:</label>
+              <button onclick="setModalExactCash(${bill.total})" class="text-[10px] bg-brand-500 text-white font-bold px-2 py-0.5 rounded-lg shadow">Uang Pas</button>
+            </div>
+            <input type="text" id="modal-cash-input" oninput="formatRupiahInput(this); calculateModalChange(${bill.total})" placeholder="Rp Nominal Tunai..." class="w-full p-2 bg-white dark:bg-gray-800 border-2 border-brand-400 rounded-lg text-xs font-extrabold">
+            <div class="flex justify-between text-xs font-bold pt-1">
+              <span class="text-gray-500">Kembalian:</span>
+              <span id="modal-cash-change-disp" class="text-emerald-600">Rp 0</span>
+            </div>
+          </div>
+        `;
+      } else if (method === 'qris') {
+        area.innerHTML = `<div class="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl text-center text-[10px]"><p class="font-bold text-brand-600">QRIS Mandiri Standar Nasional</p><p class="font-mono">1080020840832 (RAJA RASA RESTO)</p></div>`;
+      } else if (method === 'transfer') {
+        area.innerHTML = `<div class="p-2.5 bg-gray-50 dark:bg-gray-900 rounded-xl text-xs"><p class="font-bold text-brand-600">Bank Mandiri Transfer</p><p class="font-mono text-[11px]">1080020840832 a/n RAJA RASA RESTO</p></div>`;
+      }
+
+      validateModalPayButton(bill.total);
+    }
+
+    function setModalExactCash(total) {
+      var input = document.getElementById('modal-cash-input');
+      if (input) {
+        input.value = "Rp " + new Intl.NumberFormat('id-ID').format(total);
+        calculateModalChange(total);
+      }
+    }
+
+    function calculateModalChange(total) {
+      var rawGiven = document.getElementById('modal-cash-input')?.value.replace(/[^0-9]/g, '') || '0';
+      var given = parseInt(rawGiven) || 0;
+      var change = given - total;
+      var disp = document.getElementById('modal-cash-change-disp');
+      if (disp) disp.innerText = formatRupiahASCII(change >= 0 ? change : 0);
+      validateModalPayButton(total);
+    }
+
+    function validateModalPayButton(total) {
+      var btn = document.getElementById('btn-submit-openbill-pay');
+      if (!modalPaySelectedMethod) { btn.disabled = true; return; }
+
+      if (modalPaySelectedMethod === 'cash') {
+        var rawGiven = document.getElementById('modal-cash-input')?.value.replace(/[^0-9]/g, '') || '0';
+        btn.disabled = (parseInt(rawGiven) || 0) < total;
+      } else {
+        btn.disabled = false;
+      }
+    }
+
+    // --- FIX SUBMIT OPEN BILL PAYMENT (PENGHAPUSAN OPEN BILL PASTI TEREKSEKUSI) ---
+    async function submitOpenBillPayment() {
+      var bill = openBills[modalPayTableKey];
+      if (!bill) return;
+
+      var trxCode = 'TRX' + Date.now().toString().slice(-6);
+      var now = new Date();
+      var timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      var dateStr = shiftInfo.date;
+
+      var total = bill.total || 0;
+      var given = total;
+      var change = 0;
+
+      if (modalPaySelectedMethod === 'cash') {
+        var rawGiven = document.getElementById('modal-cash-input').value.replace(/[^0-9]/g, '');
+        given = parseInt(rawGiven) || total;
+        change = given - total;
+      }
+
+      var transactionData = {
+        code: trxCode,
+        date: dateStr,
+        time: timeStr,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        kasir: shiftInfo.kasirName,
+        orderType: bill.orderType || 'DINE_IN',
+        table: modalPayTableKey,
+        rawTable: bill.rawTable || modalPayTableKey,
+        items: bill.items || [],
+        note: bill.note || '',
+        total: total,
+        paymentMethod: modalPaySelectedMethod,
+        cashGiven: given,
+        cashChange: change,
+        status: 'SUCCESS',
+        kitchenStatus: 'SELESAI'
+      };
+
+      db.ref('transactions/' + trxCode).set(transactionData, async function(err) {
+        if (!err) {
+          db.ref('open_bills/' + modalPayTableKey).remove();
+
+          if (btKasirCharacteristic) {
+            var kasirBuf = buildESCPOSBuffer(transactionData, false, false);
+            await sendESCPOSToPrinter(btKasirCharacteristic, kasirBuf);
+          }
+
+          renderAndPrintReceiptImage(transactionData, false, false);
+
+          closePayOpenBillModal();
+          if (activeEditingTable === modalPayTableKey) cancelOpenBillEditMode();
+          renderOpenBillsBar();
+          alert("Pelunasan " + (bill.rawTable || modalPayTableKey) + " Berhasil!");
+        }
+      });
     }
 
     // --- CART SYSTEM ---
@@ -1547,13 +1792,13 @@
               <div class="flex items-center justify-between">
                 <div class="pr-2 flex-1">
                   <h5 class="font-bold text-gray-800 dark:text-gray-200 truncate">${item.name}</h5>
-                  <span class="text-gray-400 text-[10px]">${formatRupiah(item.price)}</span>
+                  <span class="text-gray-400 text-[10px]">${formatRupiahASCII(item.price)}</span>
                 </div>
                 <div class="flex items-center space-x-1.5">
                   <button onclick="updateCartQty('${item.id}', -1)" class="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 font-bold">-</button>
                   <span class="font-bold w-4 text-center">${item.qty}</span>
                   <button onclick="updateCartQty('${item.id}', 1)" class="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 font-bold">+</button>
-                  <span class="font-extrabold text-brand-600 ml-2 w-14 text-right">${formatRupiah(item.price * item.qty)}</span>
+                  <span class="font-extrabold text-brand-600 ml-2 w-14 text-right">${formatRupiahASCII(item.price * item.qty)}</span>
                 </div>
               </div>
               <div class="mt-1 flex items-center justify-between text-[10px]">
@@ -1570,11 +1815,11 @@
       var totalPrice = cart.reduce(function(sum, i) { return sum + (i.price * i.qty); }, 0);
 
       document.getElementById('cart-total-qty').innerText = totalQty;
-      document.getElementById('cart-total-price').innerText = formatRupiah(totalPrice);
+      document.getElementById('cart-total-price').innerText = formatRupiahASCII(totalPrice);
       validateCheckoutButton();
     }
 
-    // --- PAYMENT METHODS ---
+    // --- PAYMENT METHODS DIRECT ---
     function selectPaymentMethod(method) {
       if (cart.length === 0) return alert("Pilih menu terlebih dahulu!");
       selectedPayment = method;
@@ -1616,7 +1861,7 @@
       var given = parseInt(rawGiven) || 0;
       var change = given - totalPrice;
       var disp = document.getElementById('cash-change-disp');
-      if (disp) disp.innerText = formatRupiah(change >= 0 ? change : 0);
+      if (disp) disp.innerText = formatRupiahASCII(change >= 0 ? change : 0);
       validateCheckoutButton();
     }
 
@@ -1633,7 +1878,7 @@
       }
     }
 
-    // --- PROCESS CHECKOUT (DENGAN DUKUNGAN PELUNASAN OPEN BILL) ---
+    // --- FIX PROCESS CHECKOUT (HAPUS OPEN BILL JIKA ADA, BERSIH 100%) ---
     async function processCheckout() {
       if (cart.length === 0) return;
 
@@ -1675,16 +1920,11 @@
         kitchenStatus: 'SELESAI'
       };
 
-      // Tentukan key open bill yang akan dihapus dari firebase (activeEditingTable / tableKey)
-      var targetDeleteKey = activeEditingTable || tableKey;
-
       db.ref('transactions/' + trxCode).set(transactionData, async function(err) {
         if (!err) {
-          // Hapus open bill jika transaksi berupa Dine In/Open Bill yang sudah dilunasi
+          var targetDeleteKey = activeEditingTable || tableKey;
           if (targetDeleteKey && openBills[targetDeleteKey]) {
             db.ref('open_bills/' + targetDeleteKey).remove();
-          } else if (openBills[tableKey]) {
-            db.ref('open_bills/' + tableKey).remove();
           }
 
           if (btKasirCharacteristic) {
@@ -1709,7 +1949,6 @@
       });
     }
 
-    // --- BATALKAN / CANCEL TRANSAKSI ---
     function cancelTransaction(code) {
       if (confirm("Apakah Anda yakin ingin membatalkan transaksi " + code + "?")) {
         db.ref('transactions/' + code).update({
@@ -1768,7 +2007,7 @@
             <td class="p-2.5 font-mono font-bold">${m.code}</td>
             <td class="p-2.5 font-bold text-gray-800 dark:text-white">${m.name}</td>
             <td class="p-2.5"><span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">${m.cat}</span></td>
-            <td class="p-2.5 font-extrabold text-brand-600">${formatRupiah(m.price)}</td>
+            <td class="p-2.5 font-extrabold text-brand-600">${formatRupiahASCII(m.price)}</td>
             <td class="p-2.5 text-center space-x-1">
               <button onclick="openMenuModal('edit', '${m.id}')" class="bg-yellow-500 text-gray-900 px-2 py-1 rounded text-xs font-bold">Edit</button>
               <button onclick="deleteMenuCRUD('${m.id}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">Hapus</button>
@@ -1881,7 +2120,7 @@
       db.ref('menu_items').set(updated);
     }
 
-    // --- ARSIP STRUK REAL-TIME TABLE ---
+    // --- ARSIP STRUK REAL-TIME TABLE (JPEG) ---
     function renderArsipStrukTable() {
       var query = document.getElementById('arsip-filter-query')?.value.toLowerCase() || "";
       var dateVal = document.getElementById('arsip-filter-date')?.value || "";
@@ -1910,11 +2149,11 @@
             <td class="p-2.5">${t.kasir}</td>
             <td class="p-2.5 font-bold">${t.orderType === 'DINE_IN' ? dispName : 'Take Away'}</td>
             <td class="p-2.5">${itemsStr} ${t.note ? '<br><span class="text-yellow-600 font-bold">[Global Note: ' + t.note + ']</span>' : ''}</td>
-            <td class="p-2.5 font-extrabold">${formatRupiah(t.total)}</td>
+            <td class="p-2.5 font-extrabold">${formatRupiahASCII(t.total)}</td>
             <td class="p-2.5 uppercase font-semibold">${t.paymentMethod}</td>
             <td class="p-2.5 text-center">
               <button onclick="reprintReceipt('${t.code}')" class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs font-bold">
-                <i class="fa-solid fa-print"></i> Print Struk
+                <i class="fa-solid fa-file-image text-brand-500"></i> Struk JPEG
               </button>
             </td>
           </tr>
@@ -1959,10 +2198,10 @@
         else if (pm === 'transfer') transferTotal += (t.total || 0);
       });
 
-      document.getElementById('manager-metric-omzet').innerText = formatRupiah(totalOmzet);
-      document.getElementById('manager-omzet-cash').innerText = formatRupiah(cashTotal);
-      document.getElementById('manager-omzet-qris').innerText = formatRupiah(qrisTotal);
-      document.getElementById('manager-omzet-transfer').innerText = formatRupiah(transferTotal);
+      document.getElementById('manager-metric-omzet').innerText = formatRupiahASCII(totalOmzet);
+      document.getElementById('manager-omzet-cash').innerText = formatRupiahASCII(cashTotal);
+      document.getElementById('manager-omzet-qris').innerText = formatRupiahASCII(qrisTotal);
+      document.getElementById('manager-omzet-transfer').innerText = formatRupiahASCII(transferTotal);
 
       document.getElementById('manager-metric-trx').innerText = successTrx.length;
       document.getElementById('manager-metric-batal').innerText = cancelledTrx.length;
@@ -2052,7 +2291,7 @@
             <td class="p-2">${t.time}</td>
             <td class="p-2 font-bold text-brand-600">${t.orderType === 'DINE_IN' ? dispName : 'Take Away'}</td>
             <td class="p-2">${itemsStr}</td>
-            <td class="p-2 font-bold">${formatRupiah(t.total)}</td>
+            <td class="p-2 font-bold">${formatRupiahASCII(t.total)}</td>
             <td class="p-2 uppercase">${t.paymentMethod}</td>
             <td class="p-2"><span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${isCancelled ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}">${t.status}</span></td>
             <td class="p-2 text-center space-x-1">
@@ -2064,13 +2303,12 @@
       }).join('');
     }
 
-    // --- KITCHEN FIFO DISPLAY (PEMISAHAN CARD TAMBAHAN MENU & CAP DEDICATED) ---
+    // --- KITCHEN FIFO DISPLAY ---
     function renderKitchenDisplay() {
       var grid = document.getElementById('kitchen-orders-grid');
       var tbody = document.getElementById('kitchen-history-tbody');
       var targetDate = kitchenSelectedDate || shiftInfo.date;
 
-      // Ambil transaksi LUNAS
       var completedOrders = transactions.filter(function(t) { 
         return t.date === targetDate && t.status !== 'CANCELLED'; 
       }).map(function(t) {
@@ -2093,7 +2331,6 @@
         };
       });
 
-      // Ambil seluruh TIKET dari OPEN BILLS aktif secara terpisah (Memisah Card Per Tiket)
       var openBillTickets = [];
       Object.keys(openBills).forEach(function(tableKey) {
         var bill = openBills[tableKey];
@@ -2123,7 +2360,6 @@
               });
             });
           } else {
-            // Fallback format lama jika belum ada tickets
             openBillTickets.push({
               key: tableKey,
               tableKey: tableKey,
@@ -2147,7 +2383,6 @@
         }
       });
 
-      // Gabungkan seluruh tiket aktif untuk KDS (Dukungan FIFO)
       var activeOrders = completedOrders.concat(openBillTickets).sort(function(a, b) { 
         return (a.timestamp || 0) - (b.timestamp || 0); 
       });
@@ -2166,7 +2401,6 @@
           return `
             <div class="bg-white dark:bg-gray-800 border-2 ${t.isAdditional ? 'border-red-500 bg-red-50/20 dark:bg-red-950/20' : (t.isOpenBill ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20' : (t.kitchenStatus === 'SELESAI' ? 'border-emerald-500/50' : 'border-yellow-500'))} rounded-2xl p-4 shadow-md flex flex-col justify-between">
               <div>
-                <!-- BANNER CAP KHUSUS MENU TAMBAHAN -->
                 ${t.isAdditional ? `
                   <div class="mb-2 bg-red-600 text-white font-black text-center py-1 px-3 rounded-xl text-xs shadow tracking-wide animate-pulse flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-circle-plus text-sm"></i> MENU TAMBAHAN #${t.ticketNum}
@@ -2358,10 +2592,6 @@
         btnDine.className = "px-3 py-1 text-xs font-bold rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 transition";
         boxTable.classList.add('hidden');
       }
-    }
-
-    function formatRupiah(num) {
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0);
     }
 
     function formatRupiahInput(input) {
